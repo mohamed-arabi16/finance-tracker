@@ -3,21 +3,50 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { mockIncomes } from "@/data/mockData";
-import { Income } from "@/types/finance";
+import { Income, IncomeCategory, IncomeStatus } from "@/types/finance";
 import { format } from "date-fns";
-import { Plus } from "lucide-react";
+import { Plus, Edit, Trash } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 
 const IncomePage = () => {
-  const totalReceived = mockIncomes
+  const [incomes, setIncomes] = useState<Income[]>(mockIncomes);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
+  const { toast } = useToast();
+
+  // Form state
+  const [formData, setFormData] = useState<{
+    title: string;
+    amount: number;
+    category: IncomeCategory;
+    date: string;
+    status: IncomeStatus;
+    currency?: 'USD' | 'TRY';
+  }>({
+    title: "",
+    amount: 0,
+    category: "other",
+    date: new Date().toISOString().split('T')[0],
+    status: "expected",
+    currency: "USD"
+  });
+
+  const totalReceived = incomes
     .filter(income => income.status === "received")
     .reduce((sum, income) => sum + income.amount, 0);
 
-  const totalExpected = mockIncomes
+  const totalExpected = incomes
     .filter(income => income.status === "expected")
     .reduce((sum, income) => sum + income.amount, 0);
 
-  const incomeByCategory = mockIncomes.reduce((acc, income) => {
+  const incomeByCategory = incomes.reduce((acc, income) => {
     if (!acc[income.category]) {
       acc[income.category] = 0;
     }
@@ -25,14 +54,194 @@ const IncomePage = () => {
     return acc;
   }, {} as Record<string, number>);
 
+  const handleAddIncome = () => {
+    const newIncome: Income = {
+      id: Date.now().toString(),
+      title: formData.title,
+      amount: Number(formData.amount),
+      category: formData.category,
+      date: new Date(formData.date),
+      status: formData.status,
+      currency: formData.currency
+    };
+    
+    setIncomes([...incomes, newIncome]);
+    setIsAddDialogOpen(false);
+    resetForm();
+    
+    toast({
+      title: "Income Added",
+      description: `${newIncome.title} has been added to your incomes.`,
+    });
+  };
+
+  const handleEditIncome = () => {
+    if (!editingIncome) return;
+    
+    const updatedIncomes = incomes.map(income => {
+      if (income.id === editingIncome.id) {
+        return {
+          ...income,
+          title: formData.title,
+          amount: Number(formData.amount),
+          category: formData.category,
+          date: new Date(formData.date),
+          status: formData.status,
+          currency: formData.currency
+        };
+      }
+      return income;
+    });
+    
+    setIncomes(updatedIncomes);
+    setIsEditDialogOpen(false);
+    setEditingIncome(null);
+    resetForm();
+    
+    toast({
+      title: "Income Updated",
+      description: `${formData.title} has been updated.`,
+    });
+  };
+
+  const handleDeleteIncome = (id: string) => {
+    setIncomes(incomes.filter(income => income.id !== id));
+    
+    toast({
+      title: "Income Deleted",
+      description: "The income has been removed from your records.",
+    });
+  };
+
+  const openEditDialog = (income: Income) => {
+    setEditingIncome(income);
+    setFormData({
+      title: income.title,
+      amount: income.amount,
+      category: income.category,
+      date: format(income.date, "yyyy-MM-dd"),
+      status: income.status,
+      currency: income.currency || "USD"
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      amount: 0,
+      category: "other",
+      date: new Date().toISOString().split('T')[0],
+      status: "expected",
+      currency: "USD"
+    });
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Income Manager</h2>
-          <Button className="bg-teal hover:bg-teal-light">
-            <Plus className="h-4 w-4 mr-2" /> Add Income
-          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-teal hover:bg-teal-light">
+                <Plus className="h-4 w-4 mr-2" /> Add Income
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Income</DialogTitle>
+                <DialogDescription>
+                  Enter the details for your new income.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">Title</Label>
+                  <Input 
+                    id="title" 
+                    className="col-span-3"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="amount" className="text-right">Amount</Label>
+                  <Input 
+                    id="amount" 
+                    type="number" 
+                    className="col-span-3"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({...formData, amount: Number(e.target.value)})}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="currency" className="text-right">Currency</Label>
+                  <Select 
+                    value={formData.currency}
+                    onValueChange={(value: 'USD' | 'TRY') => setFormData({...formData, currency: value})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="TRY">TRY (₺)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">Category</Label>
+                  <Select 
+                    value={formData.category}
+                    onValueChange={(value: IncomeCategory) => setFormData({...formData, category: value})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="freelance">Freelance</SelectItem>
+                      <SelectItem value="student">Student Commission</SelectItem>
+                      <SelectItem value="rent">Rent</SelectItem>
+                      <SelectItem value="videography">Videography</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">Date</Label>
+                  <Input 
+                    id="date" 
+                    type="date" 
+                    className="col-span-3"
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">Status</Label>
+                  <Select 
+                    value={formData.status}
+                    onValueChange={(value: IncomeStatus) => setFormData({...formData, status: value})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="received">Received</SelectItem>
+                      <SelectItem value="expected">Expected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddIncome}>Add Income</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
         
         {/* Income summary */}
@@ -90,16 +299,17 @@ const IncomePage = () => {
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
-              <div className="grid grid-cols-5 p-3 bg-muted text-muted-foreground text-sm font-medium">
+              <div className="grid grid-cols-6 p-3 bg-muted text-muted-foreground text-sm font-medium">
                 <div className="col-span-2">Title</div>
                 <div>Date</div>
                 <div>Status</div>
-                <div className="text-right">Amount</div>
+                <div>Amount</div>
+                <div className="text-right">Actions</div>
               </div>
-              {mockIncomes.map((income: Income) => (
+              {incomes.map((income: Income) => (
                 <div
                   key={income.id}
-                  className="grid grid-cols-5 p-3 border-t items-center"
+                  className="grid grid-cols-6 p-3 border-t items-center"
                 >
                   <div className="col-span-2">
                     <div>{income.title}</div>
@@ -114,8 +324,16 @@ const IncomePage = () => {
                       {income.status.charAt(0).toUpperCase() + income.status.slice(1)}
                     </Badge>
                   </div>
-                  <div className="text-right font-medium">
-                    ${income.amount.toLocaleString()}
+                  <div className="font-medium">
+                    {income.currency === 'TRY' ? '₺' : '$'}{income.amount.toLocaleString()}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(income)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteIncome(income.id)}>
+                      <Trash className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -123,6 +341,106 @@ const IncomePage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Income Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Income</DialogTitle>
+            <DialogDescription>
+              Update the details of your income.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-title" className="text-right">Title</Label>
+              <Input 
+                id="edit-title" 
+                className="col-span-3"
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-amount" className="text-right">Amount</Label>
+              <Input 
+                id="edit-amount" 
+                type="number" 
+                className="col-span-3"
+                value={formData.amount}
+                onChange={(e) => setFormData({...formData, amount: Number(e.target.value)})}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-currency" className="text-right">Currency</Label>
+              <Select 
+                value={formData.currency}
+                onValueChange={(value: 'USD' | 'TRY') => setFormData({...formData, currency: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD ($)</SelectItem>
+                  <SelectItem value="TRY">TRY (₺)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-category" className="text-right">Category</Label>
+              <Select 
+                value={formData.category}
+                onValueChange={(value: IncomeCategory) => setFormData({...formData, category: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="freelance">Freelance</SelectItem>
+                  <SelectItem value="student">Student Commission</SelectItem>
+                  <SelectItem value="rent">Rent</SelectItem>
+                  <SelectItem value="videography">Videography</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-date" className="text-right">Date</Label>
+              <Input 
+                id="edit-date" 
+                type="date" 
+                className="col-span-3"
+                value={formData.date}
+                onChange={(e) => setFormData({...formData, date: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-status" className="text-right">Status</Label>
+              <Select 
+                value={formData.status}
+                onValueChange={(value: IncomeStatus) => setFormData({...formData, status: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="received">Received</SelectItem>
+                  <SelectItem value="expected">Expected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsEditDialogOpen(false);
+              setEditingIncome(null);
+            }}>Cancel</Button>
+            <Button onClick={handleEditIncome}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

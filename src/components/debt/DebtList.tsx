@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mockDebts } from "@/data/mockData";
-import { CreditCard, Clock } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,8 +10,25 @@ const DebtList = () => {
   const shortTermDebts = mockDebts.filter(debt => !debt.isLongTerm);
   const longTermDebts = mockDebts.filter(debt => debt.isLongTerm);
 
-  const totalShortTerm = shortTermDebts.reduce((sum, debt) => sum + debt.amount, 0);
-  const totalLongTerm = longTermDebts.reduce((sum, debt) => sum + debt.amount, 0);
+  const totalShortTerm = shortTermDebts.reduce((sum, debt) => {
+    // Convert TRY to USD for display
+    const amountInUSD = debt.currency === 'TRY' ? Math.round(debt.amount / 38.76) : debt.amount;
+    return sum + amountInUSD;
+  }, 0);
+  
+  const totalLongTerm = longTermDebts.reduce((sum, debt) => {
+    // Convert TRY to USD for display
+    const amountInUSD = debt.currency === 'TRY' ? Math.round(debt.amount / 38.76) : debt.amount;
+    return sum + amountInUSD;
+  }, 0);
+
+  const formatDeadline = (date: Date) => {
+    // Check if it's the beginning of 2026 (used for "no fixed date")
+    if (date.getFullYear() === 2026 && date.getMonth() === 0 && date.getDate() === 1) {
+      return "No fixed date";
+    }
+    return format(date, "MMM d, yyyy");
+  };
 
   return (
     <Card className="h-full">
@@ -24,11 +41,11 @@ const DebtList = () => {
           <div className="flex gap-4 text-sm">
             <div>
               <span className="text-muted-foreground">Short-Term:</span>{" "}
-              <span className="font-semibold finance-negative">${totalShortTerm.toLocaleString()}</span>
+              <span className="font-semibold finance-negative">${Math.round(totalShortTerm).toLocaleString()}</span>
             </div>
             <div>
               <span className="text-muted-foreground">Long-Term:</span>{" "}
-              <span className="font-semibold finance-negative">${totalLongTerm.toLocaleString()}</span>
+              <span className="font-semibold finance-negative">${Math.round(totalLongTerm).toLocaleString()}</span>
             </div>
           </div>
         </CardTitle>
@@ -42,7 +59,7 @@ const DebtList = () => {
           
           <TabsContent value="short-term">
             <div className="space-y-3">
-              {shortTermDebts.map((debt) => (
+              {shortTermDebts.slice(0, 3).map((debt) => (
                 <div
                   key={debt.id}
                   className="flex items-center justify-between p-4 rounded-md bg-card border hover:border-negative/30 transition-colors"
@@ -53,11 +70,7 @@ const DebtList = () => {
                       <span>Creditor: {debt.creditor}</span>
                       {debt.deadline && (
                         <span>
-                          Due: {
-                            debt.deadline.getFullYear() === 2026 
-                              ? "No fixed date" 
-                              : format(debt.deadline, "MMM d, yyyy")
-                          }
+                          Due: {formatDeadline(debt.deadline)}
                         </span>
                       )}
                     </div>
@@ -70,7 +83,7 @@ const DebtList = () => {
                       {debt.status === "pending" ? "Pending" : "Paid"}
                     </Badge>
                     <div className="font-semibold text-right w-24 text-lg text-negative">
-                      ${debt.amount.toLocaleString()}
+                      {debt.currency === 'TRY' ? '₺' : '$'}{Math.round(debt.amount).toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -94,7 +107,7 @@ const DebtList = () => {
                   <div className="flex items-center gap-3">
                     <Badge variant="outline">Long-Term</Badge>
                     <div className="font-semibold text-right w-24 text-lg text-negative">
-                      ${debt.amount.toLocaleString()}
+                      {debt.currency === 'TRY' ? '₺' : '$'}{Math.round(debt.amount).toLocaleString()}
                     </div>
                   </div>
                 </div>

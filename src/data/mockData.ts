@@ -3,14 +3,6 @@ import { Asset, Debt, Expense, Income } from "@/types/finance";
 
 export const mockIncomes: Income[] = [
   {
-    id: "1",
-    title: "Freelance Work",
-    amount: 3500, // Variable monthly amount (example)
-    category: "freelance",
-    date: new Date(2025, 4, 15), // May 15, 2025
-    status: "received"
-  },
-  {
     id: "2",
     title: "Student Registration Commission",
     amount: 6000,
@@ -33,6 +25,31 @@ export const mockIncomes: Income[] = [
     category: "videography",
     date: new Date(2025, 7, 15), // Aug 15, 2025
     status: "expected"
+  },
+  {
+    id: "5",
+    title: "Videography Shooting",
+    amount: 200,
+    category: "videography",
+    date: new Date(2025, 4, 25), // May 25, 2025
+    status: "received"
+  },
+  {
+    id: "6",
+    title: "Part of Student Registration Commission",
+    amount: 300,
+    category: "student",
+    date: new Date(2025, 4, 20), // May 20, 2025
+    status: "received"
+  },
+  {
+    id: "7",
+    title: "Debt Payback from Ahmad",
+    amount: 10000,
+    category: "other",
+    date: new Date(2025, 4, 18), // May 18, 2025
+    status: "expected",
+    currency: "TRY"
   }
 ];
 
@@ -102,6 +119,34 @@ export const mockDebts: Debt[] = [
     deadline: new Date(2028, 0, 1), // Jan 1, 2028
     isLongTerm: true,
     status: "pending"
+  },
+  {
+    id: "5",
+    title: "Silver Debt to Wife",
+    amount: 1900, // Estimated value of 2kg silver
+    creditor: "Wife",
+    deadline: new Date(2028, 0, 1), // Jan 1, 2028
+    isLongTerm: true,
+    status: "pending"
+  },
+  {
+    id: "6",
+    title: "Credit Card",
+    amount: 84500,
+    creditor: "Bank",
+    deadline: new Date(2025, 4, 14), // May 14, 2025
+    isLongTerm: false,
+    status: "pending",
+    currency: "TRY"
+  },
+  {
+    id: "7",
+    title: "Saralia Event Marketing",
+    amount: 1000,
+    creditor: "Saralia",
+    deadline: new Date(2025, 5, 15), // Jun 15, 2025
+    isLongTerm: false,
+    status: "pending"
   }
 ];
 
@@ -121,7 +166,7 @@ export const mockAssets: Asset[] = [
 
 // Exchange rate - in a real app, this would come from an API
 export const exchangeRate = {
-  USDTRY: 31.5 // 1 USD = 31.5 TRY (example rate)
+  USDTRY: 38.76 // Updated exchange rate: 1 USD = 38.76 TRY
 };
 
 export const calculateFinanceSummary = (currency = 'USD') => {
@@ -130,16 +175,34 @@ export const calculateFinanceSummary = (currency = 'USD') => {
   // Function to convert expense amount to selected currency
   const convertExpenseAmount = (expense: Expense) => {
     if (expense.currency === 'TRY') {
-      return currency === 'USD' ? expense.amount / exchangeRate.USDTRY : expense.amount;
+      return currency === 'USD' ? Math.round(expense.amount / exchangeRate.USDTRY) : expense.amount;
     } else {
-      return currency === 'USD' ? expense.amount : expense.amount * exchangeRate.USDTRY;
+      return currency === 'USD' ? expense.amount : Math.round(expense.amount * exchangeRate.USDTRY);
+    }
+  };
+
+  // Function to convert income amount to selected currency
+  const convertIncomeAmount = (income: Income) => {
+    if (income.currency === 'TRY') {
+      return currency === 'USD' ? Math.round(income.amount / exchangeRate.USDTRY) : income.amount;
+    } else {
+      return currency === 'USD' ? income.amount : Math.round(income.amount * exchangeRate.USDTRY);
+    }
+  };
+
+  // Function to convert debt amount to selected currency
+  const convertDebtAmount = (debt: Debt) => {
+    if (debt.currency === 'TRY') {
+      return currency === 'USD' ? Math.round(debt.amount / exchangeRate.USDTRY) : debt.amount;
+    } else {
+      return currency === 'USD' ? debt.amount : Math.round(debt.amount * exchangeRate.USDTRY);
     }
   };
 
   // Current cash (simplification: sum of received incomes - sum of expenses)
   const currentCash = mockIncomes
     .filter(income => income.status === "received")
-    .reduce((sum, income) => sum + income.amount, 0) - 
+    .reduce((sum, income) => sum + convertIncomeAmount(income), 0) - 
     mockExpenses.reduce((sum, expense) => sum + convertExpenseAmount(expense), 0);
 
   // Expected income (next 60 days)
@@ -149,17 +212,17 @@ export const calculateFinanceSummary = (currency = 'USD') => {
   
   const upcomingIncome = mockIncomes
     .filter(income => income.status === "expected" && income.date <= sixtyDaysLater)
-    .reduce((sum, income) => sum + income.amount, 0);
+    .reduce((sum, income) => sum + convertIncomeAmount(income), 0);
   
   // Short term debt
   const shortTermDebt = mockDebts
     .filter(debt => !debt.isLongTerm && debt.status === "pending")
-    .reduce((sum, debt) => sum + debt.amount, 0);
+    .reduce((sum, debt) => sum + convertDebtAmount(debt), 0);
   
   // Long term debt
   const longTermDebt = mockDebts
     .filter(debt => debt.isLongTerm && debt.status === "pending")
-    .reduce((sum, debt) => sum + debt.amount, 0);
+    .reduce((sum, debt) => sum + convertDebtAmount(debt), 0);
 
   // Monthly expenses (recurring only)
   const monthlyExpenses = mockExpenses

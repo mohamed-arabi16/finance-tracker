@@ -15,7 +15,7 @@ const ExpenseList = () => {
     .filter(expense => expense.type === "recurring")
     .reduce((sum, expense) => {
       // Convert TRY to USD for display
-      const amountInUSD = expense.currency === 'TRY' ? expense.amount / exchangeRate.USDTRY : expense.amount;
+      const amountInUSD = expense.currency === 'TRY' ? Math.round(expense.amount / exchangeRate.USDTRY) : expense.amount;
       return sum + amountInUSD;
     }, 0);
 
@@ -23,7 +23,7 @@ const ExpenseList = () => {
     .filter(expense => expense.type === "one-time")
     .reduce((sum, expense) => {
       // Convert TRY to USD for display
-      const amountInUSD = expense.currency === 'TRY' ? expense.amount / exchangeRate.USDTRY : expense.amount;
+      const amountInUSD = expense.currency === 'TRY' ? Math.round(expense.amount / exchangeRate.USDTRY) : expense.amount;
       return sum + amountInUSD;
     }, 0);
 
@@ -38,11 +38,11 @@ const ExpenseList = () => {
           <div className="flex gap-4 text-sm">
             <div>
               <span className="text-muted-foreground">Monthly:</span>{" "}
-              <span className="font-semibold finance-negative">${totalRecurring.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              <span className="font-semibold finance-negative">${Math.round(totalRecurring).toLocaleString()}</span>
             </div>
             <div>
               <span className="text-muted-foreground">One-time:</span>{" "}
-              <span className="font-semibold finance-negative">${totalOneTime.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              <span className="font-semibold finance-negative">${Math.round(totalOneTime).toLocaleString()}</span>
             </div>
           </div>
         </CardTitle>
@@ -73,7 +73,7 @@ const ExpenseList = () => {
                   {expense.type === "recurring" ? "Monthly" : "One-time"}
                 </Badge>
                 <div className="font-semibold text-right w-24 text-lg text-negative">
-                  {expense.currency === 'TRY' ? '₺' : '$'}{expense.amount.toLocaleString()}
+                  {expense.currency === 'TRY' ? '₺' : '$'}{Math.round(expense.amount).toLocaleString()}
                 </div>
               </div>
             </div>

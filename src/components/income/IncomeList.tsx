@@ -41,18 +41,18 @@ const IncomeList = () => {
           <div className="flex gap-4 text-sm">
             <div>
               <span className="text-muted-foreground">Received:</span>{" "}
-              <span className="font-semibold finance-positive">${totalReceived.toLocaleString()}</span>
+              <span className="font-semibold finance-positive">${Math.round(totalReceived).toLocaleString()}</span>
             </div>
             <div>
               <span className="text-muted-foreground">Expected:</span>{" "}
-              <span className="font-semibold">${totalExpected.toLocaleString()}</span>
+              <span className="font-semibold">${Math.round(totalExpected).toLocaleString()}</span>
             </div>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         <div className="space-y-3">
-          {sortedIncomes.map((income) => (
+          {sortedIncomes.slice(0, 4).map((income) => (
             <div
               key={income.id}
               className="flex items-center justify-between p-4 rounded-md bg-card border hover:border-primary/30 transition-colors"
@@ -71,7 +71,7 @@ const IncomeList = () => {
                   </span>
                 </Badge>
                 <div className="font-semibold text-right w-24 text-lg">
-                  ${income.amount.toLocaleString()}
+                  {income.currency === 'TRY' ? '₺' : '$'}{Math.round(income.amount).toLocaleString()}
                 </div>
               </div>
             </div>

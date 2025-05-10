@@ -1,15 +1,17 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateFinanceSummary } from "@/data/mockData";
-import { ArrowDown, ArrowUp, CreditCard, Coins, DollarSign, Currency } from "lucide-react";
+import { ArrowDown, ArrowUp, CreditCard, Coins, DollarSign, Currency, Download } from "lucide-react";
 import { useState } from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const FinanceSummary = () => {
   const [includeLongTermDebt, setIncludeLongTermDebt] = useState(false);
   const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
+  const { toast } = useToast();
   
   const summary = calculateFinanceSummary(currency);
   
@@ -19,6 +21,30 @@ const FinanceSummary = () => {
     : summary.netWorth;
     
   const currencySymbol = currency === 'USD' ? '$' : '₺';
+  
+  const handleDownloadReport = () => {
+    // In a real app, this would generate a PDF or Excel file
+    toast({
+      title: "Report Download Started",
+      description: "Your financial report will be downloaded shortly.",
+    });
+    
+    // Simulate file download
+    setTimeout(() => {
+      const element = document.createElement("a");
+      element.setAttribute("href", "data:text/plain;charset=utf-8,");
+      element.setAttribute("download", "financial-report.txt");
+      element.style.display = "none";
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      
+      toast({
+        title: "Report Downloaded",
+        description: "Your financial report has been downloaded successfully.",
+      });
+    }, 1500);
+  };
 
   return (
     <div className="space-y-6">
@@ -42,6 +68,11 @@ const FinanceSummary = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          <Button variant="outline" size="sm" className="h-8" onClick={handleDownloadReport}>
+            <Download className="h-4 w-4 mr-2" />
+            Download Report
+          </Button>
         </div>
         
         <div className="flex items-center gap-2">

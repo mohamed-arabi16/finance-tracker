@@ -18,7 +18,7 @@ const AssetList = () => {
           </div>
           <div className="text-sm">
             <span className="text-muted-foreground">Total Value:</span>{" "}
-            <span className="font-semibold finance-positive">${totalValue.toLocaleString()}</span>
+            <span className="font-semibold finance-positive">${Math.round(totalValue).toLocaleString()}</span>
           </div>
         </CardTitle>
       </CardHeader>
@@ -37,10 +37,10 @@ const AssetList = () => {
               </div>
               <div className="flex flex-col items-end">
                 <div className="font-semibold text-lg finance-positive">
-                  ${(asset.amount * asset.currentPrice).toLocaleString()}
+                  ${Math.round(asset.amount * asset.currentPrice).toLocaleString()}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  ${asset.currentPrice.toLocaleString()} per {asset.unit}
+                  ${Math.round(asset.currentPrice).toLocaleString()} per {asset.unit}
                 </div>
               </div>
             </div>
