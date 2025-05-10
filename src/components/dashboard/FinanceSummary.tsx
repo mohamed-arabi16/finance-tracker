@@ -1,16 +1,25 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateFinanceSummary } from "@/data/mockData";
-import { ArrowDown, ArrowUp, CreditCard, Coins, DollarSign, Currency, Download } from "lucide-react";
+import { ArrowDown, ArrowUp, CreditCard, Coins, Currency, Download } from "lucide-react";
 import { useState } from "react";
 import { Toggle } from "@/components/ui/toggle";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { format } from "date-fns";
 
 const FinanceSummary = () => {
-  const [includeLongTermDebt, setIncludeLongTermDebt] = useState(false);
-  const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
+  const [includeLongTermDebt, setIncludeLongTermDebt] = useState(() => {
+    const saved = localStorage.getItem('includeLongTermDebt');
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+  
+  // Get currency from localStorage (should be set by Layout)
+  const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
+    const saved = localStorage.getItem('defaultCurrency');
+    return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
+  });
+  
   const { toast } = useToast();
   
   const summary = calculateFinanceSummary(currency);
@@ -23,17 +32,68 @@ const FinanceSummary = () => {
   const currencySymbol = currency === 'USD' ? '$' : '₺';
   
   const handleDownloadReport = () => {
-    // In a real app, this would generate a PDF or Excel file
+    // Generate CSV data for all finances
+    const generateCSV = () => {
+      // Build headers
+      let csvContent = "Type,Title,Amount,Status,Date,Notes\n";
+      
+      // Add incomes to CSV
+      const { mockIncomes, mockExpenses, mockDebts, mockAssets, exchangeRate } = require("@/data/mockData");
+      
+      mockIncomes.forEach(income => {
+        const amount = income.currency === 'TRY' ? 
+          `${income.amount} TRY (~ ${Math.round(income.amount / exchangeRate.USDTRY)} USD)` : 
+          `${income.amount} USD`;
+        csvContent += `Income,${income.title},${amount},${income.status},${format(income.date, "yyyy-MM-dd")},"${income.category}"\n`;
+      });
+      
+      // Add expenses to CSV
+      mockExpenses.forEach(expense => {
+        const amount = expense.currency === 'TRY' ? 
+          `${expense.amount} TRY (~ ${Math.round(expense.amount / exchangeRate.USDTRY)} USD)` : 
+          `${expense.amount} USD`;
+        csvContent += `Expense,${expense.title},${amount},${expense.type},${format(expense.date, "yyyy-MM-dd")},"${expense.category || 'N/A'}"\n`;
+      });
+      
+      // Add debts to CSV
+      mockDebts.forEach(debt => {
+        const amount = debt.currency === 'TRY' ? 
+          `${debt.amount} TRY (~ ${Math.round(debt.amount / exchangeRate.USDTRY)} USD)` : 
+          `${debt.amount} USD`;
+        csvContent += `Debt,${debt.title},${amount},${debt.isLongTerm ? 'Long-Term' : 'Short-Term'},${format(debt.deadline, "yyyy-MM-dd")},"Creditor: ${debt.creditor}"\n`;
+      });
+      
+      // Add assets to CSV
+      mockAssets.forEach(asset => {
+        csvContent += `Asset,${asset.title},${asset.amount} ${asset.unit},Current Value: $${Math.round(asset.amount * asset.currentPrice)},N/A,"Type: ${asset.type}"\n`;
+      });
+      
+      // Add summary section
+      csvContent += "\n\nFINANCIAL SUMMARY\n";
+      csvContent += `Available Balance,${currencySymbol}${Math.abs(summary.availableBalance).toLocaleString()},${summary.availableBalance >= 0 ? 'Positive' : 'Negative'}\n`;
+      csvContent += `Net Worth,${currencySymbol}${Math.abs(adjustedNetWorth).toLocaleString()},${adjustedNetWorth >= 0 ? 'Positive' : 'Negative'}\n`;
+      csvContent += `Monthly Expenses,${currencySymbol}${summary.monthlyExpenses.toLocaleString()}\n`;
+      csvContent += `Short-Term Debt,${currencySymbol}${summary.shortTermDebt.toLocaleString()}\n`;
+      csvContent += `Long-Term Debt,${currencySymbol}${summary.longTermDebt.toLocaleString()}\n`;
+      
+      return csvContent;
+    };
+    
+    // Start download process
     toast({
       title: "Report Download Started",
       description: "Your financial report will be downloaded shortly.",
     });
     
-    // Simulate file download
+    // Generate CSV and download
     setTimeout(() => {
+      const csvData = generateCSV();
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      
       const element = document.createElement("a");
-      element.setAttribute("href", "data:text/plain;charset=utf-8,");
-      element.setAttribute("download", "financial-report.txt");
+      element.setAttribute("href", url);
+      element.setAttribute("download", `financial-report-${format(new Date(), "yyyy-MM-dd")}.csv`);
       element.style.display = "none";
       document.body.appendChild(element);
       element.click();
@@ -43,31 +103,14 @@ const FinanceSummary = () => {
         title: "Report Downloaded",
         description: "Your financial report has been downloaded successfully.",
       });
-    }, 1500);
+    }, 1000);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <h2 className="text-xl font-semibold">Financial Summary</h2>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 flex gap-1">
-                <Currency className="h-4 w-4" />
-                <span>{currency}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setCurrency('USD')}>
-                USD ($)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCurrency('TRY')}>
-                TRY (₺)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           
           <Button variant="outline" size="sm" className="h-8" onClick={handleDownloadReport}>
             <Download className="h-4 w-4 mr-2" />
@@ -90,14 +133,14 @@ const FinanceSummary = () => {
         <Card className="border-l-4 border-l-teal h-48">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
+              <ArrowDown className="h-5 w-5" />
               Available Balance
             </CardTitle>
             <CardDescription>Current + Expected Income - Short-Term Debt - Monthly Expenses</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-center h-20 pt-2">
             <p className={`text-3xl font-bold ${summary.availableBalance >= 0 ? 'finance-positive' : 'finance-negative'}`}>
-              {currencySymbol}{Math.abs(summary.availableBalance).toLocaleString()}
+              {summary.availableBalance >= 0 ? '' : '-'}{currencySymbol}{Math.abs(summary.availableBalance).toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -108,13 +151,13 @@ const FinanceSummary = () => {
             <CardTitle className="text-lg">Net Worth</CardTitle>
             <CardDescription>
               {includeLongTermDebt
-                ? "Available Balance + Assets - All Debt"
-                : "Available Balance + Assets"}
+                ? "Available Balance - Long-Term Debt"
+                : "Available Balance"}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-center h-20 pt-2">
             <p className={`text-3xl font-bold ${adjustedNetWorth >= 0 ? 'finance-positive' : 'finance-negative'}`}>
-              {currencySymbol}{Math.abs(adjustedNetWorth).toLocaleString()}
+              {adjustedNetWorth >= 0 ? '' : '-'}{currencySymbol}{Math.abs(adjustedNetWorth).toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -198,6 +241,41 @@ const FinanceSummary = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Urgent Debts Section */}
+      {summary.urgentDebts && summary.urgentDebts.length > 0 && (
+        <Card className="border-2 border-negative/30">
+          <CardHeader>
+            <CardTitle className="text-negative flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Urgent Debts
+            </CardTitle>
+            <CardDescription>
+              These debts are due within the next 7 days and require immediate attention
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              {summary.urgentDebts.map((debt) => (
+                <div
+                  key={debt.id}
+                  className="flex items-center justify-between p-4 rounded-md bg-negative/5 border border-negative/20"
+                >
+                  <div className="flex flex-col">
+                    <div className="font-medium">{debt.title}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Due: {format(debt.deadline, "MMM d, yyyy")} ({Math.round((debt.deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left)
+                    </div>
+                  </div>
+                  <div className="font-semibold text-negative">
+                    {debt.currency === 'TRY' ? '₺' : '$'}{Math.round(debt.amount).toLocaleString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

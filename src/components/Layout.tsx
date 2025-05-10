@@ -18,15 +18,30 @@ import {
   ArrowUp, 
   CreditCard, 
   Coins, 
-  Settings 
+  Settings,
+  Currency
 } from "lucide-react";
 import { ReactNode } from "react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
+  // Load currency preference from localStorage if available
+  const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
+    const saved = localStorage.getItem('defaultCurrency');
+    return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
+  });
+
+  // Save currency preference to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('defaultCurrency', currency);
+  }, [currency]);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -34,9 +49,27 @@ const Layout = ({ children }: LayoutProps) => {
         <main className="flex-1 p-6 lg:px-8">
           <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-semibold">
-                Balance Tracker
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-semibold">
+                  Balance Tracker
+                </h1>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 flex gap-1">
+                      <Currency className="h-4 w-4" />
+                      <span>{currency}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setCurrency('USD')}>
+                      USD ($)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setCurrency('TRY')}>
+                      TRY (₺)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
               <SidebarTrigger />
             </div>
             {children}

@@ -48,7 +48,7 @@ export const mockIncomes: Income[] = [
     amount: 10000,
     category: "other",
     date: new Date(2025, 4, 18), // May 18, 2025
-    status: "expected",
+    status: "received",
     currency: "TRY"
   }
 ];
@@ -147,6 +147,16 @@ export const mockDebts: Debt[] = [
     deadline: new Date(2025, 5, 15), // Jun 15, 2025
     isLongTerm: false,
     status: "pending"
+  },
+  {
+    id: "8",
+    title: "Debt to Diaa ALzoughbi",
+    amount: 4000,
+    creditor: "Diaa ALzoughbi",
+    deadline: new Date(2025, 6, 1), // Jul 1, 2025
+    isLongTerm: false,
+    status: "pending",
+    currency: "TRY"
   }
 ];
 
@@ -234,11 +244,28 @@ export const calculateFinanceSummary = (currency = 'USD') => {
     (sum, asset) => sum + asset.amount * asset.currentPrice, 0
   );
 
-  // Available balance
+  // Available balance (don't include assets in net worth as specified)
   const availableBalance = currentCash + upcomingIncome - shortTermDebt - monthlyExpenses;
 
-  // Net worth (without long term debt)
-  const netWorth = availableBalance + savingsValue;
+  // Net worth (without assets as specified)
+  const netWorth = availableBalance;
+
+  // Get urgent debts (due within 7 days)
+  const now2 = new Date();
+  const sevenDaysLater = new Date(now2);
+  sevenDaysLater.setDate(now2.getDate() + 7);
+  
+  const urgentDebts = mockDebts
+    .filter(debt => 
+      !debt.isLongTerm && 
+      debt.status === "pending" && 
+      debt.deadline >= now2 && 
+      debt.deadline <= sevenDaysLater
+    )
+    .map(debt => ({
+      ...debt,
+      amountConverted: convertDebtAmount(debt)
+    }));
 
   return {
     currency,
@@ -248,6 +275,7 @@ export const calculateFinanceSummary = (currency = 'USD') => {
     longTermDebt,
     monthlyExpenses,
     savingsValue,
-    netWorth
+    netWorth,
+    urgentDebts
   };
 };

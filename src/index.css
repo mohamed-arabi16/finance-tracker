@@ -80,6 +80,40 @@
   .stat-label {
     @apply text-sm text-muted-foreground;
   }
+  
+  /* Improved mobile responsiveness */
+  @media (max-width: 640px) {
+    .container {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    h1, h2 {
+      font-size: 1.5rem;
+    }
+    
+    .stat-value {
+      font-size: 1.25rem;
+    }
+    
+    /* Better spacing on mobile */
+    .p-6 {
+      padding: 1rem;
+    }
+    
+    .gap-8 {
+      gap: 1.5rem;
+    }
+    
+    .gap-6 {
+      gap: 1rem;
+    }
+    
+    /* Make sure text doesn't overflow */
+    .text-3xl {
+      font-size: clamp(1.25rem, 5vw, 1.875rem);
+    }
+  }
 }
 
 /* Additional custom styles */
@@ -98,4 +132,29 @@
 
 .card:hover {
   @apply shadow-md;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .text-lg {
+    font-size: 1rem;
+  }
+  
+  /* Ensure better spacing on small screens */
+  .space-y-8 {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Force proper vertical alignment within cards */
+.card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }

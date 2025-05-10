@@ -4,6 +4,10 @@ import { mockAssets } from "@/data/mockData";
 import { Coins } from "lucide-react";
 
 const AssetList = () => {
+  // Get currency from localStorage
+  const currency = localStorage.getItem('defaultCurrency') === 'TRY' ? 'TRY' : 'USD';
+  const currencySymbol = currency === 'USD' ? '$' : '₺';
+  
   const totalValue = mockAssets.reduce(
     (sum, asset) => sum + asset.amount * asset.currentPrice, 0
   );
@@ -18,7 +22,7 @@ const AssetList = () => {
           </div>
           <div className="text-sm">
             <span className="text-muted-foreground">Total Value:</span>{" "}
-            <span className="font-semibold finance-positive">${Math.round(totalValue).toLocaleString()}</span>
+            <span className="font-semibold finance-positive">{currencySymbol}{Math.round(totalValue).toLocaleString()}</span>
           </div>
         </CardTitle>
       </CardHeader>
@@ -37,10 +41,10 @@ const AssetList = () => {
               </div>
               <div className="flex flex-col items-end">
                 <div className="font-semibold text-lg finance-positive">
-                  ${Math.round(asset.amount * asset.currentPrice).toLocaleString()}
+                  {currencySymbol}{Math.round(asset.amount * asset.currentPrice).toLocaleString()}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  ${Math.round(asset.currentPrice).toLocaleString()} per {asset.unit}
+                  {currencySymbol}{Math.round(asset.currentPrice).toLocaleString()} per {asset.unit}
                 </div>
               </div>
             </div>
