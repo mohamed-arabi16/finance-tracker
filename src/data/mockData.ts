@@ -12,7 +12,7 @@ export const mockIncomes: Income[] = [
   },
   {
     id: "2",
-    title: "Student Commission",
+    title: "Student Registration Commission",
     amount: 6000,
     category: "student",
     date: new Date(2025, 8, 10), // Sep 10, 2025
@@ -28,7 +28,7 @@ export const mockIncomes: Income[] = [
   },
   {
     id: "4",
-    title: "Videography Rent",
+    title: "Videography Rent Income",
     amount: 500,
     category: "videography",
     date: new Date(2025, 7, 15), // Aug 15, 2025
@@ -43,7 +43,8 @@ export const mockExpenses: Expense[] = [
     amount: 18000,
     date: new Date(2025, 4, 14), // May 14, 2025
     type: "recurring",
-    category: "Housing"
+    category: "Housing",
+    currency: "TRY"
   },
   {
     id: "2",
@@ -51,7 +52,8 @@ export const mockExpenses: Expense[] = [
     amount: 1100,
     date: new Date(2025, 4, 5), // May 5, 2025
     type: "recurring",
-    category: "Utilities"
+    category: "Utilities",
+    currency: "TRY"
   },
   {
     id: "3",
@@ -59,14 +61,15 @@ export const mockExpenses: Expense[] = [
     amount: 3000,
     date: new Date(2025, 4, 10), // May 10, 2025
     type: "recurring",
-    category: "Bills"
+    category: "Bills",
+    currency: "TRY"
   }
 ];
 
 export const mockDebts: Debt[] = [
   {
     id: "1",
-    title: "Phone",
+    title: "Phone Installment",
     amount: 1150,
     creditor: "Phone Company",
     deadline: new Date(2025, 5, 30), // June 30, 2025
@@ -75,25 +78,25 @@ export const mockDebts: Debt[] = [
   },
   {
     id: "2",
-    title: "Mother",
+    title: "Debt to Mother",
     amount: 700,
     creditor: "Mother",
-    deadline: new Date(2026, 0, 1), // Open/indefinite, but set a date
+    deadline: new Date(2026, 0, 1), // No fixed date (set to beginning of next year)
     isLongTerm: false,
     status: "pending"
   },
   {
     id: "3",
-    title: "Wife",
+    title: "Debt to Wife",
     amount: 100,
     creditor: "Wife",
-    deadline: new Date(2026, 0, 1), // Open/indefinite, but set a date
+    deadline: new Date(2026, 0, 1), // No fixed date (set to beginning of next year)
     isLongTerm: false,
     status: "pending"
   },
   {
     id: "4",
-    title: "Wedding + Furniture",
+    title: "Wedding and Furniture",
     amount: 8000,
     creditor: "Various",
     deadline: new Date(2028, 0, 1), // Jan 1, 2028
@@ -102,7 +105,7 @@ export const mockDebts: Debt[] = [
   }
 ];
 
-// Placeholder for real-time silver price - in a real app, this would come from an API
+// Current silver price - in a real app, this would come from an API
 const currentSilverPricePerKg = 950; // Approximately $950 per kg
 
 export const mockAssets: Asset[] = [
@@ -116,12 +119,28 @@ export const mockAssets: Asset[] = [
   }
 ];
 
-export const calculateFinanceSummary = () => {
+// Exchange rate - in a real app, this would come from an API
+export const exchangeRate = {
+  USDTRY: 31.5 // 1 USD = 31.5 TRY (example rate)
+};
+
+export const calculateFinanceSummary = (currency = 'USD') => {
+  const rate = currency === 'USD' ? 1 : exchangeRate.USDTRY;
+  
+  // Function to convert expense amount to selected currency
+  const convertExpenseAmount = (expense: Expense) => {
+    if (expense.currency === 'TRY') {
+      return currency === 'USD' ? expense.amount / exchangeRate.USDTRY : expense.amount;
+    } else {
+      return currency === 'USD' ? expense.amount : expense.amount * exchangeRate.USDTRY;
+    }
+  };
+
   // Current cash (simplification: sum of received incomes - sum of expenses)
   const currentCash = mockIncomes
     .filter(income => income.status === "received")
     .reduce((sum, income) => sum + income.amount, 0) - 
-    mockExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    mockExpenses.reduce((sum, expense) => sum + convertExpenseAmount(expense), 0);
 
   // Expected income (next 60 days)
   const now = new Date();
@@ -145,7 +164,7 @@ export const calculateFinanceSummary = () => {
   // Monthly expenses (recurring only)
   const monthlyExpenses = mockExpenses
     .filter(expense => expense.type === "recurring")
-    .reduce((sum, expense) => sum + expense.amount, 0);
+    .reduce((sum, expense) => sum + convertExpenseAmount(expense), 0);
 
   // Savings value
   const savingsValue = mockAssets.reduce(
@@ -159,6 +178,7 @@ export const calculateFinanceSummary = () => {
   const netWorth = availableBalance + savingsValue;
 
   return {
+    currency,
     availableBalance,
     upcomingIncome,
     shortTermDebt,

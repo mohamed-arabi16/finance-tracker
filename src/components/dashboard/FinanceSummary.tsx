@@ -1,23 +1,49 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateFinanceSummary } from "@/data/mockData";
-import { ArrowDown, ArrowUp, CreditCard, Coins, DollarSign } from "lucide-react";
+import { ArrowDown, ArrowUp, CreditCard, Coins, DollarSign, Currency } from "lucide-react";
 import { useState } from "react";
 import { Toggle } from "@/components/ui/toggle";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 const FinanceSummary = () => {
   const [includeLongTermDebt, setIncludeLongTermDebt] = useState(false);
-  const summary = calculateFinanceSummary();
+  const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
+  
+  const summary = calculateFinanceSummary(currency);
   
   // Adjust net worth based on toggle
   const adjustedNetWorth = includeLongTermDebt
     ? summary.netWorth - summary.longTermDebt
     : summary.netWorth;
+    
+  const currencySymbol = currency === 'USD' ? '$' : '₺';
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Financial Summary</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold">Financial Summary</h2>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 flex gap-1">
+                <Currency className="h-4 w-4" />
+                <span>{currency}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setCurrency('USD')}>
+                USD ($)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCurrency('TRY')}>
+                TRY (₺)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Include Long-Term Debt</span>
           <Toggle 
@@ -38,9 +64,9 @@ const FinanceSummary = () => {
             </CardTitle>
             <CardDescription>Current + Expected Income - Short-Term Debt - Monthly Expenses</CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-20">
+          <CardContent className="flex items-center justify-center h-20 pt-2">
             <p className={`text-3xl font-bold ${summary.availableBalance >= 0 ? 'finance-positive' : 'finance-negative'}`}>
-              ${summary.availableBalance.toLocaleString()}
+              {currencySymbol}{Math.abs(summary.availableBalance).toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -55,9 +81,9 @@ const FinanceSummary = () => {
                 : "Available Balance + Assets"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-20">
+          <CardContent className="flex items-center justify-center h-20 pt-2">
             <p className={`text-3xl font-bold ${adjustedNetWorth >= 0 ? 'finance-positive' : 'finance-negative'}`}>
-              ${adjustedNetWorth.toLocaleString()}
+              {currencySymbol}{Math.abs(adjustedNetWorth).toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -71,9 +97,9 @@ const FinanceSummary = () => {
             </CardTitle>
             <CardDescription>Expected in next 60 days</CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-20">
+          <CardContent className="flex items-center justify-center h-20 pt-2">
             <p className="text-3xl font-bold finance-positive">
-              ${summary.upcomingIncome.toLocaleString()}
+              {currencySymbol}{summary.upcomingIncome.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -89,9 +115,9 @@ const FinanceSummary = () => {
               Monthly Expenses
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-14">
+          <CardContent className="flex items-center justify-center h-14 pt-2">
             <p className="text-xl font-semibold finance-negative">
-              ${summary.monthlyExpenses.toLocaleString()}
+              {currencySymbol}{summary.monthlyExpenses.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -104,9 +130,9 @@ const FinanceSummary = () => {
               Short-Term Debt
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-14">
+          <CardContent className="flex items-center justify-center h-14 pt-2">
             <p className="text-xl font-semibold finance-negative">
-              ${summary.shortTermDebt.toLocaleString()}
+              {currencySymbol}{summary.shortTermDebt.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -119,9 +145,9 @@ const FinanceSummary = () => {
               Long-Term Debt
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-14">
+          <CardContent className="flex items-center justify-center h-14 pt-2">
             <p className="text-xl font-semibold text-muted-foreground">
-              ${summary.longTermDebt.toLocaleString()}
+              {currencySymbol}{summary.longTermDebt.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -134,9 +160,9 @@ const FinanceSummary = () => {
               Assets Value
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-14">
+          <CardContent className="flex items-center justify-center h-14 pt-2">
             <p className="text-xl font-semibold finance-positive">
-              ${summary.savingsValue.toLocaleString()}
+              {currencySymbol}{summary.savingsValue.toLocaleString()}
             </p>
           </CardContent>
         </Card>

@@ -3,6 +3,7 @@ export type IncomeStatus = 'received' | 'expected';
 export type DebtStatus = 'paid' | 'pending';
 export type ExpenseType = 'recurring' | 'one-time';
 export type IncomeCategory = 'freelance' | 'student' | 'rent' | 'videography' | 'other';
+export type Currency = 'USD' | 'TRY';
 
 export interface Income {
   id: string;
@@ -11,6 +12,7 @@ export interface Income {
   category: IncomeCategory;
   date: Date;
   status: IncomeStatus;
+  currency?: Currency; // Optional for backward compatibility
 }
 
 export interface Expense {
@@ -20,6 +22,7 @@ export interface Expense {
   date: Date;
   type: ExpenseType;
   category?: string;
+  currency?: Currency; // Optional for backward compatibility
 }
 
 export interface Debt {
@@ -30,6 +33,7 @@ export interface Debt {
   deadline: Date;
   isLongTerm: boolean;
   status: DebtStatus;
+  currency?: Currency; // Optional for backward compatibility
 }
 
 export interface Asset {
@@ -39,9 +43,11 @@ export interface Asset {
   amount: number;
   unit: string;
   currentPrice: number;
+  currency?: Currency; // Optional for backward compatibility
 }
 
 export interface FinanceSummary {
+  currency: Currency;
   availableBalance: number;
   upcomingIncome: number;
   shortTermDebt: number;
