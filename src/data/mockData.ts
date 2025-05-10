@@ -4,34 +4,34 @@ import { Asset, Debt, Expense, Income } from "@/types/finance";
 export const mockIncomes: Income[] = [
   {
     id: "1",
-    title: "Freelance Web Development",
-    amount: 2500,
+    title: "Freelance Work",
+    amount: 3500, // Variable monthly amount (example)
     category: "freelance",
     date: new Date(2025, 4, 15), // May 15, 2025
-    status: "expected"
+    status: "received"
   },
   {
     id: "2",
-    title: "Student Project Commission",
-    amount: 1200,
+    title: "Student Commission",
+    amount: 6000,
     category: "student",
-    date: new Date(2025, 5, 10), // June 10, 2025
+    date: new Date(2025, 8, 10), // Sep 10, 2025
     status: "expected"
   },
   {
     id: "3",
-    title: "Apartment Rental Income",
-    amount: 850,
-    category: "rent",
-    date: new Date(2025, 4, 5), // May 5, 2025
-    status: "received"
+    title: "Delayed Paycheck",
+    amount: 2600,
+    category: "other",
+    date: new Date(2025, 6, 20), // Jul 20, 2025
+    status: "expected"
   },
   {
     id: "4",
-    title: "Wedding Videography",
-    amount: 1500,
+    title: "Videography Rent",
+    amount: 500,
     category: "videography",
-    date: new Date(2025, 4, 20), // May 20, 2025
+    date: new Date(2025, 7, 15), // Aug 15, 2025
     status: "expected"
   }
 ];
@@ -40,83 +40,79 @@ export const mockExpenses: Expense[] = [
   {
     id: "1",
     title: "Rent",
-    amount: 1200,
-    date: new Date(2025, 4, 1), // May 1, 2025
+    amount: 18000,
+    date: new Date(2025, 4, 14), // May 14, 2025
     type: "recurring",
     category: "Housing"
   },
   {
     id: "2",
-    title: "Internet",
-    amount: 65,
+    title: "Utilities",
+    amount: 1100,
     date: new Date(2025, 4, 5), // May 5, 2025
     type: "recurring",
     category: "Utilities"
   },
   {
     id: "3",
-    title: "Grocery",
-    amount: 350,
+    title: "Other Bills",
+    amount: 3000,
     date: new Date(2025, 4, 10), // May 10, 2025
     type: "recurring",
-    category: "Food"
-  },
-  {
-    id: "4",
-    title: "New Camera Equipment",
-    amount: 800,
-    date: new Date(2025, 4, 15), // May 15, 2025
-    type: "one-time",
-    category: "Business Expense"
+    category: "Bills"
   }
 ];
 
 export const mockDebts: Debt[] = [
   {
     id: "1",
-    title: "Friend Loan",
-    amount: 500,
-    creditor: "Ahmed",
-    deadline: new Date(2025, 4, 30), // May 30, 2025
+    title: "Phone",
+    amount: 1150,
+    creditor: "Phone Company",
+    deadline: new Date(2025, 5, 30), // June 30, 2025
     isLongTerm: false,
     status: "pending"
   },
   {
     id: "2",
-    title: "Camera Equipment Loan",
-    amount: 2000,
-    creditor: "Camera Store",
-    deadline: new Date(2025, 7, 15), // Aug 15, 2025
-    isLongTerm: true,
+    title: "Mother",
+    amount: 700,
+    creditor: "Mother",
+    deadline: new Date(2026, 0, 1), // Open/indefinite, but set a date
+    isLongTerm: false,
     status: "pending"
   },
   {
     id: "3",
-    title: "Student Loan",
-    amount: 15000,
-    creditor: "University Credit",
+    title: "Wife",
+    amount: 100,
+    creditor: "Wife",
+    deadline: new Date(2026, 0, 1), // Open/indefinite, but set a date
+    isLongTerm: false,
+    status: "pending"
+  },
+  {
+    id: "4",
+    title: "Wedding + Furniture",
+    amount: 8000,
+    creditor: "Various",
     deadline: new Date(2028, 0, 1), // Jan 1, 2028
     isLongTerm: true,
     status: "pending"
   }
 ];
 
+// Placeholder for real-time silver price - in a real app, this would come from an API
+const currentSilverPricePerKg = 950; // Approximately $950 per kg
+
 export const mockAssets: Asset[] = [
   {
     id: "1",
-    title: "Silver Bars",
+    title: "Silver",
     type: "silver",
     amount: 1, // 1 kilogram
     unit: "kg",
-    currentPrice: 850 // $850 per kg
-  },
-  {
-    id: "2",
-    title: "Silver Coins",
-    type: "silver",
-    amount: 20, // 20 coins
-    unit: "oz",
-    currentPrice: 27 // $27 per oz
+    currentPrice: currentSilverPricePerKg // Would be fetched from API
   }
 ];
 

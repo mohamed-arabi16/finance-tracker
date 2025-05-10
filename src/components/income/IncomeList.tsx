@@ -31,7 +31,7 @@ const IncomeList = () => {
     .reduce((sum, income) => sum + income.amount, 0);
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -50,12 +50,12 @@ const IncomeList = () => {
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-4">
+        <div className="space-y-3">
           {sortedIncomes.map((income) => (
             <div
               key={income.id}
-              className="flex items-center justify-between p-3 rounded-md bg-card border"
+              className="flex items-center justify-between p-4 rounded-md bg-card border hover:border-primary/30 transition-colors"
             >
               <div className="flex flex-col">
                 <div className="font-medium">{income.title}</div>
@@ -64,13 +64,13 @@ const IncomeList = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Badge className={statusColors[income.status]}>
+                <Badge className={`${statusColors[income.status]} px-2 py-1`}>
                   <span className="flex items-center gap-1">
                     {statusIcons[income.status]} 
                     {income.status.charAt(0).toUpperCase() + income.status.slice(1)}
                   </span>
                 </Badge>
-                <div className="font-semibold text-right w-24">
+                <div className="font-semibold text-right w-24 text-lg">
                   ${income.amount.toLocaleString()}
                 </div>
               </div>

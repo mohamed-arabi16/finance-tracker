@@ -20,7 +20,7 @@ const ExpenseList = () => {
     .reduce((sum, expense) => sum + expense.amount, 0);
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -39,17 +39,17 @@ const ExpenseList = () => {
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-4">
+        <div className="space-y-3">
           {sortedExpenses.map((expense) => (
             <div
               key={expense.id}
-              className="flex items-center justify-between p-3 rounded-md bg-card border"
+              className="flex items-center justify-between p-4 rounded-md bg-card border hover:border-negative/30 transition-colors"
             >
               <div className="flex flex-col">
                 <div className="font-medium">{expense.title}</div>
                 <div className="text-sm text-muted-foreground flex items-center gap-2">
-                  <span>{format(expense.date, "MMM d, yyyy")}</span>
+                  <span>Due: {format(expense.date, "MMM d, yyyy")}</span>
                   {expense.category && (
                     <Badge variant="outline" className="font-normal">
                       {expense.category}
@@ -64,7 +64,7 @@ const ExpenseList = () => {
                 >
                   {expense.type === "recurring" ? "Monthly" : "One-time"}
                 </Badge>
-                <div className="font-semibold text-right w-24 text-negative">
+                <div className="font-semibold text-right w-24 text-lg text-negative">
                   ${expense.amount.toLocaleString()}
                 </div>
               </div>

@@ -45,6 +45,11 @@
     --sidebar-accent-foreground: 180 30% 97%;
     --sidebar-border: 192 80% 28%;
     --sidebar-ring: 180 30% 85%;
+
+    --positive: 160 70% 40%;
+    --negative: 14 76% 62%;
+    --teal: 183 87% 32%;
+    --teal-light: 183 87% 42%;
   }
 
   * {
@@ -53,6 +58,10 @@
 
   body {
     @apply bg-background text-foreground font-poppins;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
   }
 
   /* Custom utility classes */
@@ -80,4 +89,13 @@
 
 .finance-negative {
   @apply text-negative;
+}
+
+/* Card alignment and consistency */
+.card {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+.card:hover {
+  @apply shadow-md;
 }
