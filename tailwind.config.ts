@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,17 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Finance app specific colors
+				teal: {
+					DEFAULT: '#005F73',
+					light: '#0A9396',
+				},
+				mint: '#94D2BD',
+				orange: '#EE6C4D',
+				positive: '#94D2BD',
+				negative: '#EE6C4D',
+				neutral: '#E9F5F5',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -89,7 +100,10 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+			},
+			fontFamily: {
+				poppins: ['Poppins', 'sans-serif'],
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
