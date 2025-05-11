@@ -2,17 +2,18 @@
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockIncomes } from "@/data/mockData";
+import { mockIncomes, exchangeRate } from "@/data/mockData";
 import { Income, IncomeCategory, IncomeStatus } from "@/types/finance";
 import { format } from "date-fns";
-import { Plus, Edit, Trash } from "lucide-react";
-import { useState } from "react";
+import { Plus, Edit, Trash, Currency } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const IncomePage = () => {
   const [incomes, setIncomes] = useState<Income[]>(mockIncomes);
@@ -20,6 +21,17 @@ const IncomePage = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const { toast } = useToast();
+  
+  // Get currency from localStorage
+  const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
+    const saved = localStorage.getItem('defaultCurrency');
+    return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
+  });
+  
+  // Save currency preference to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('defaultCurrency', currency);
+  }, [currency]);
 
   // Form state
   const [formData, setFormData] = useState<{
@@ -38,19 +50,30 @@ const IncomePage = () => {
     currency: "USD"
   });
 
+  // Convert income amount based on selected currency
+  const convertAmount = (income: Income): number => {
+    if (income.currency === 'TRY' && currency === 'USD') {
+      return Math.round(income.amount / exchangeRate.USDTRY);
+    } else if (!income.currency || income.currency === 'USD' && currency === 'TRY') {
+      return Math.round(income.amount * exchangeRate.USDTRY);
+    } 
+    return Math.round(income.amount);
+  };
+
   const totalReceived = incomes
     .filter(income => income.status === "received")
-    .reduce((sum, income) => sum + income.amount, 0);
+    .reduce((sum, income) => sum + convertAmount(income), 0);
 
   const totalExpected = incomes
     .filter(income => income.status === "expected")
-    .reduce((sum, income) => sum + income.amount, 0);
+    .reduce((sum, income) => sum + convertAmount(income), 0);
 
+  // Category totals need to use the converted amounts
   const incomeByCategory = incomes.reduce((acc, income) => {
     if (!acc[income.category]) {
       acc[income.category] = 0;
     }
-    acc[income.category] += income.amount;
+    acc[income.category] += convertAmount(income);
     return acc;
   }, {} as Record<string, number>);
 
@@ -137,11 +160,31 @@ const IncomePage = () => {
     });
   };
 
+  const currencySymbol = currency === 'USD' ? '$' : '₺';
+
   return (
     <Layout>
       <div className="space-y-8">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold">Income Manager</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold">Income Manager</h2>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 flex gap-1">
+                  <Currency className="h-4 w-4" />
+                  <span>{currency}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setCurrency('USD')}>
+                  USD ($)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCurrency('TRY')}>
+                  TRY (₺)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-teal hover:bg-teal-light">
@@ -251,7 +294,7 @@ const IncomePage = () => {
               <CardTitle className="text-base">Total Received</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold finance-positive">${totalReceived.toLocaleString()}</p>
+              <p className="text-2xl font-bold finance-positive">{currencySymbol}{totalReceived.toLocaleString()}</p>
             </CardContent>
           </Card>
           
@@ -260,7 +303,7 @@ const IncomePage = () => {
               <CardTitle className="text-base">Expected</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">${totalExpected.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{currencySymbol}{totalExpected.toLocaleString()}</p>
             </CardContent>
           </Card>
           
@@ -269,7 +312,7 @@ const IncomePage = () => {
               <CardTitle className="text-base">Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">${(totalReceived + totalExpected).toLocaleString()}</p>
+              <p className="text-2xl font-bold">{currencySymbol}{(totalReceived + totalExpected).toLocaleString()}</p>
             </CardContent>
           </Card>
         </div>
@@ -285,7 +328,7 @@ const IncomePage = () => {
               {Object.entries(incomeByCategory).map(([category, amount]) => (
                 <div key={category} className="p-4 border rounded-md">
                   <div className="text-sm text-muted-foreground mb-1 capitalize">{category}</div>
-                  <div className="text-lg font-semibold">${amount.toLocaleString()}</div>
+                  <div className="text-lg font-semibold">{currencySymbol}{amount.toLocaleString()}</div>
                 </div>
               ))}
             </div>
@@ -325,7 +368,7 @@ const IncomePage = () => {
                     </Badge>
                   </div>
                   <div className="font-medium">
-                    {income.currency === 'TRY' ? '₺' : '$'}{income.amount.toLocaleString()}
+                    {income.currency === 'TRY' ? '₺' : '$'}{Math.round(income.amount).toLocaleString()}
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(income)}>

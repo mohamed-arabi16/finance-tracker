@@ -37,9 +37,11 @@ const Layout = ({ children }: LayoutProps) => {
     return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
   });
 
-  // Save currency preference to localStorage when it changes
+  // Save currency preference to localStorage when it changes and notify other components
   useEffect(() => {
     localStorage.setItem('defaultCurrency', currency);
+    // Dispatch storage event to notify other components
+    window.dispatchEvent(new Event('storage'));
   }, [currency]);
 
   return (

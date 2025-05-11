@@ -1,16 +1,36 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockAssets } from "@/data/mockData";
+import { mockAssets, exchangeRate } from "@/data/mockData";
 import { Coins } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const AssetList = () => {
   // Get currency from localStorage
-  const currency = localStorage.getItem('defaultCurrency') === 'TRY' ? 'TRY' : 'USD';
+  const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
+    const saved = localStorage.getItem('defaultCurrency');
+    return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
+  });
+  
   const currencySymbol = currency === 'USD' ? '$' : '₺';
   
-  const totalValue = mockAssets.reduce(
-    (sum, asset) => sum + asset.amount * asset.currentPrice, 0
-  );
+  // Calculate total asset value based on selected currency
+  const totalValue = mockAssets.reduce((sum, asset) => {
+    const assetValue = asset.amount * asset.currentPrice;
+    return sum + (currency === 'USD' ? assetValue : Math.round(assetValue * exchangeRate.USDTRY));
+  }, 0);
+
+  // Update when localStorage changes (from other components)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('defaultCurrency');
+      if (saved === 'USD' || saved === 'TRY') {
+        setCurrency(saved);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <Card className="h-full">
@@ -28,27 +48,34 @@ const AssetList = () => {
       </CardHeader>
       <CardContent className="p-4">
         <div className="space-y-3">
-          {mockAssets.map((asset) => (
-            <div
-              key={asset.id}
-              className="flex items-center justify-between p-4 rounded-md bg-card border hover:border-positive/30 transition-colors"
-            >
-              <div className="flex flex-col">
-                <div className="font-medium">{asset.title}</div>
-                <div className="text-sm text-muted-foreground">
-                  {asset.amount} {asset.unit} of {asset.type}
+          {mockAssets.map((asset) => {
+            // Calculate asset values based on currency
+            const assetValue = asset.amount * asset.currentPrice;
+            const displayValue = currency === 'USD' ? assetValue : Math.round(assetValue * exchangeRate.USDTRY);
+            const unitPrice = currency === 'USD' ? asset.currentPrice : Math.round(asset.currentPrice * exchangeRate.USDTRY);
+            
+            return (
+              <div
+                key={asset.id}
+                className="flex items-center justify-between p-4 rounded-md bg-card border hover:border-positive/30 transition-colors"
+              >
+                <div className="flex flex-col">
+                  <div className="font-medium">{asset.title}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {asset.amount} {asset.unit} of {asset.type}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="font-semibold text-lg finance-positive">
+                    {currencySymbol}{Math.round(displayValue).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {currencySymbol}{Math.round(unitPrice).toLocaleString()} per {asset.unit}
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-col items-end">
-                <div className="font-semibold text-lg finance-positive">
-                  {currencySymbol}{Math.round(asset.amount * asset.currentPrice).toLocaleString()}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {currencySymbol}{Math.round(asset.currentPrice).toLocaleString()} per {asset.unit}
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

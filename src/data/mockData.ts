@@ -241,7 +241,10 @@ export const calculateFinanceSummary = (currency = 'USD') => {
 
   // Savings value
   const savingsValue = mockAssets.reduce(
-    (sum, asset) => sum + asset.amount * asset.currentPrice, 0
+    (sum, asset) => {
+      const assetValue = asset.amount * asset.currentPrice;
+      return sum + (currency === 'USD' ? assetValue : Math.round(assetValue * exchangeRate.USDTRY));
+    }, 0
   );
 
   // Available balance (don't include assets in net worth as specified)

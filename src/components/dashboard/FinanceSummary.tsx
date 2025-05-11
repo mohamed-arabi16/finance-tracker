@@ -1,8 +1,7 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateFinanceSummary } from "@/data/mockData";
 import { ArrowDown, ArrowUp, CreditCard, Coins, Currency, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -14,17 +13,35 @@ const FinanceSummary = () => {
     return saved !== null ? JSON.parse(saved) : false;
   });
   
-  // Get currency from localStorage (should be set by Layout)
+  // Get currency from localStorage
   const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
     const saved = localStorage.getItem('defaultCurrency');
     return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
   });
   
+  // Update when localStorage changes (from other components)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('defaultCurrency');
+      if (saved === 'USD' || saved === 'TRY') {
+        setCurrency(saved);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+  
+  // Update localStorage when toggle changes
+  useEffect(() => {
+    localStorage.setItem('includeLongTermDebt', JSON.stringify(includeLongTermDebt));
+  }, [includeLongTermDebt]);
+  
   const { toast } = useToast();
   
   const summary = calculateFinanceSummary(currency);
   
-  // Adjust net worth based on toggle
+  // Adjust net worth based on toggle but don't include assets
   const adjustedNetWorth = includeLongTermDebt
     ? summary.netWorth - summary.longTermDebt
     : summary.netWorth;
@@ -122,7 +139,10 @@ const FinanceSummary = () => {
           <span className="text-sm text-muted-foreground">Include Long-Term Debt</span>
           <Toggle 
             pressed={includeLongTermDebt} 
-            onPressedChange={setIncludeLongTermDebt}
+            onPressedChange={(value) => {
+              setIncludeLongTermDebt(value);
+              localStorage.setItem('includeLongTermDebt', JSON.stringify(value));
+            }}
           />
         </div>
       </div>
@@ -268,7 +288,7 @@ const FinanceSummary = () => {
                     </div>
                   </div>
                   <div className="font-semibold text-negative">
-                    {debt.currency === 'TRY' ? '₺' : '$'}{Math.round(debt.amount).toLocaleString()}
+                    {currencySymbol}{Math.round(debt.amountConverted).toLocaleString()}
                   </div>
                 </div>
               ))}
