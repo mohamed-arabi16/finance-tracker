@@ -179,34 +179,47 @@ export const exchangeRate = {
   USDTRY: 38.76 // Updated exchange rate: 1 USD = 38.76 TRY
 };
 
+// Helper function to consistently convert currency across the app
+export const convertCurrency = (amount: number, fromCurrency?: string, toCurrency?: string): number => {
+  // Default currencies if not specified
+  const from = fromCurrency || 'USD';
+  const to = toCurrency || 'USD';
+  
+  // If currencies are the same, no conversion needed
+  if (from === to) {
+    return amount;
+  }
+  
+  // Convert TRY to USD
+  if (from === 'TRY' && to === 'USD') {
+    return Math.round(amount / exchangeRate.USDTRY);
+  }
+  
+  // Convert USD to TRY
+  if (from === 'USD' && to === 'TRY') {
+    return Math.round(amount * exchangeRate.USDTRY);
+  }
+  
+  // Fallback (should not happen)
+  return amount;
+};
+
 export const calculateFinanceSummary = (currency = 'USD') => {
-  const rate = currency === 'USD' ? 1 : exchangeRate.USDTRY;
+  // Use the new convertCurrency helper function
   
   // Function to convert expense amount to selected currency
   const convertExpenseAmount = (expense: Expense) => {
-    if (expense.currency === 'TRY') {
-      return currency === 'USD' ? Math.round(expense.amount / exchangeRate.USDTRY) : expense.amount;
-    } else {
-      return currency === 'USD' ? expense.amount : Math.round(expense.amount * exchangeRate.USDTRY);
-    }
+    return convertCurrency(expense.amount, expense.currency || 'USD', currency);
   };
 
   // Function to convert income amount to selected currency
   const convertIncomeAmount = (income: Income) => {
-    if (income.currency === 'TRY') {
-      return currency === 'USD' ? Math.round(income.amount / exchangeRate.USDTRY) : income.amount;
-    } else {
-      return currency === 'USD' ? income.amount : Math.round(income.amount * exchangeRate.USDTRY);
-    }
+    return convertCurrency(income.amount, income.currency || 'USD', currency);
   };
 
   // Function to convert debt amount to selected currency
   const convertDebtAmount = (debt: Debt) => {
-    if (debt.currency === 'TRY') {
-      return currency === 'USD' ? Math.round(debt.amount / exchangeRate.USDTRY) : debt.amount;
-    } else {
-      return currency === 'USD' ? debt.amount : Math.round(debt.amount * exchangeRate.USDTRY);
-    }
+    return convertCurrency(debt.amount, debt.currency || 'USD', currency);
   };
 
   // Current cash (simplification: sum of received incomes - sum of expenses)

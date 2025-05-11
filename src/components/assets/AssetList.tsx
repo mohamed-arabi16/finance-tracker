@@ -1,25 +1,17 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockAssets, exchangeRate } from "@/data/mockData";
+import { mockAssets, exchangeRate, convertCurrency } from "@/data/mockData";
 import { Coins } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const AssetList = () => {
-  // Get currency from localStorage
+  // Get currency from localStorage with state to ensure reactivity
   const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
     const saved = localStorage.getItem('defaultCurrency');
     return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
   });
   
-  const currencySymbol = currency === 'USD' ? '$' : '₺';
-  
-  // Calculate total asset value based on selected currency
-  const totalValue = mockAssets.reduce((sum, asset) => {
-    const assetValue = asset.amount * asset.currentPrice;
-    return sum + (currency === 'USD' ? assetValue : Math.round(assetValue * exchangeRate.USDTRY));
-  }, 0);
-
-  // Update when localStorage changes (from other components)
+  // Update when localStorage changes
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem('defaultCurrency');
@@ -29,8 +21,19 @@ const AssetList = () => {
     };
     
     window.addEventListener('storage', handleStorageChange);
+    // Also check on initial mount and when component updates
+    handleStorageChange();
+    
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+  
+  const currencySymbol = currency === 'USD' ? '$' : '₺';
+  
+  // Calculate total asset value based on selected currency using the consistent conversion function
+  const totalValue = mockAssets.reduce((sum, asset) => {
+    const assetValueUSD = asset.amount * asset.currentPrice;
+    return sum + convertCurrency(assetValueUSD, 'USD', currency);
+  }, 0);
 
   return (
     <Card className="h-full">
@@ -49,10 +52,10 @@ const AssetList = () => {
       <CardContent className="p-4">
         <div className="space-y-3">
           {mockAssets.map((asset) => {
-            // Calculate asset values based on currency
-            const assetValue = asset.amount * asset.currentPrice;
-            const displayValue = currency === 'USD' ? assetValue : Math.round(assetValue * exchangeRate.USDTRY);
-            const unitPrice = currency === 'USD' ? asset.currentPrice : Math.round(asset.currentPrice * exchangeRate.USDTRY);
+            // Calculate asset values using the consistent conversion function
+            const assetValueUSD = asset.amount * asset.currentPrice;
+            const displayValue = convertCurrency(assetValueUSD, 'USD', currency);
+            const unitPrice = convertCurrency(asset.currentPrice, 'USD', currency);
             
             return (
               <div

@@ -27,6 +27,19 @@ const Index = () => {
     window.dispatchEvent(new Event('storage'));
   }, [currency]);
   
+  // Listen for storage changes from other components
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('defaultCurrency');
+      if (saved === 'USD' || saved === 'TRY') {
+        setCurrency(saved);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+  
   return (
     <Layout>
       <div className="space-y-8">
