@@ -25,6 +25,7 @@ import { ReactNode } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useExchangeRate } from "@/hooks/useExchangeRate";
 
 interface LayoutProps {
   children: ReactNode;
@@ -36,6 +37,9 @@ const Layout = ({ children }: LayoutProps) => {
     const saved = localStorage.getItem('defaultCurrency');
     return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
   });
+
+  // Get exchange rate using the new hook
+  const { exchangeRate, isLoading } = useExchangeRate();
 
   // Save currency preference to localStorage when it changes and notify other components
   useEffect(() => {
@@ -60,6 +64,7 @@ const Layout = ({ children }: LayoutProps) => {
                     <Button variant="outline" size="sm" className="h-8 flex gap-1">
                       <Currency className="h-4 w-4" />
                       <span>{currency}</span>
+                      {isLoading && <span className="ml-1 animate-spin">⟳</span>}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>

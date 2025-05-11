@@ -174,9 +174,10 @@ export const mockAssets: Asset[] = [
   }
 ];
 
-// Exchange rate - in a real app, this would come from an API
-export const exchangeRate = {
-  USDTRY: 38.76 // Updated exchange rate: 1 USD = 38.76 TRY
+// Helper function to get the current exchange rate from localStorage or use default
+export const getExchangeRate = (): number => {
+  const savedRate = localStorage.getItem('currentExchangeRate');
+  return savedRate ? parseFloat(savedRate) : 38.76; // Default fallback
 };
 
 // Helper function to consistently convert currency across the app
@@ -190,14 +191,17 @@ export const convertCurrency = (amount: number, fromCurrency?: string, toCurrenc
     return amount;
   }
   
+  // Get current exchange rate
+  const currentRate = getExchangeRate();
+  
   // Convert TRY to USD
   if (from === 'TRY' && to === 'USD') {
-    return Math.round(amount / exchangeRate.USDTRY);
+    return Math.round(amount / currentRate);
   }
   
   // Convert USD to TRY
   if (from === 'USD' && to === 'TRY') {
-    return Math.round(amount * exchangeRate.USDTRY);
+    return Math.round(amount * currentRate);
   }
   
   // Fallback (should not happen)
