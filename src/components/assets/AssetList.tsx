@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockAssets, exchangeRate, convertCurrency } from "@/data/mockData";
+import { mockAssets, convertCurrency } from "@/data/mockData";
 import { Coins } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -21,10 +21,15 @@ const AssetList = () => {
     };
     
     window.addEventListener('storage', handleStorageChange);
+    // Also listen for custom event for real-time updates
+    window.addEventListener('exchangeRateUpdated', handleStorageChange);
     // Also check on initial mount and when component updates
     handleStorageChange();
     
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('exchangeRateUpdated', handleStorageChange);
+    };
   }, []);
   
   const currencySymbol = currency === 'USD' ? '$' : '₺';

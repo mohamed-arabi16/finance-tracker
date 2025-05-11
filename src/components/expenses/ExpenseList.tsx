@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockExpenses, exchangeRate } from "@/data/mockData";
+import { mockExpenses, convertCurrency } from "@/data/mockData";
 import { ArrowUp } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,15 @@ const ExpenseList = () => {
     };
     
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    // Also listen for custom event for real-time updates
+    window.addEventListener('exchangeRateUpdated', handleStorageChange);
+    // Also check on initial mount and when component updates
+    handleStorageChange();
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('exchangeRateUpdated', handleStorageChange);
+    };
   }, []);
   
   // Sort expenses by date, with most recent first
@@ -32,12 +40,8 @@ const ExpenseList = () => {
   );
 
   const calculateAmount = (expense: any) => {
-    if (expense.currency === 'TRY' && currency === 'USD') {
-      return Math.round(expense.amount / exchangeRate.USDTRY);
-    } else if (!expense.currency || expense.currency === 'USD' && currency === 'TRY') {
-      return Math.round(expense.amount * exchangeRate.USDTRY);
-    } 
-    return Math.round(expense.amount);
+    // Use the convertCurrency function for consistent conversion
+    return convertCurrency(expense.amount, expense.currency || 'USD', currency);
   };
 
   const totalRecurring = mockExpenses
@@ -98,9 +102,7 @@ const ExpenseList = () => {
                     {expense.type === "recurring" ? "Monthly" : "One-time"}
                   </Badge>
                   <div className="font-semibold text-right w-24 text-lg text-negative">
-                    {expense.currency === 'TRY' && currency === 'TRY' ? '₺' : 
-                     expense.currency === 'USD' && currency === 'USD' ? '$' :
-                     currencySymbol}{Math.round(displayAmount).toLocaleString()}
+                    {currencySymbol}{Math.round(displayAmount).toLocaleString()}
                   </div>
                 </div>
               </div>

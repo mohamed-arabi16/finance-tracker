@@ -260,7 +260,7 @@ export const calculateFinanceSummary = (currency = 'USD') => {
   const savingsValue = mockAssets.reduce(
     (sum, asset) => {
       const assetValue = asset.amount * asset.currentPrice;
-      return sum + (currency === 'USD' ? assetValue : Math.round(assetValue * exchangeRate.USDTRY));
+      return sum + convertCurrency(assetValue, 'USD', currency);
     }, 0
   );
 

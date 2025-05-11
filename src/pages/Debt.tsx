@@ -1,11 +1,10 @@
-
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { mockDebts, exchangeRate } from "@/data/mockData";
+import { mockDebts, convertCurrency } from "@/data/mockData";
 import { Debt, DebtStatus } from "@/types/finance";
 import { format } from "date-fns";
 import { Plus, Edit, Trash } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +21,28 @@ const DebtPage = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const { toast } = useToast();
+  const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
+    const saved = localStorage.getItem('defaultCurrency');
+    return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
+  });
+  
+  // Update currency state when it changes elsewhere
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('defaultCurrency');
+      if (saved === 'USD' || saved === 'TRY') {
+        setCurrency(saved);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('exchangeRateUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('exchangeRateUpdated', handleStorageChange);
+    };
+  }, []);
 
   // Form state
   const [formData, setFormData] = useState<{
@@ -46,30 +67,28 @@ const DebtPage = () => {
   const longTermDebts = debts.filter(debt => debt.isLongTerm);
 
   const totalShortTerm = shortTermDebts.reduce((sum, debt) => {
-    // Convert TRY to USD for display
-    const amountInUSD = debt.currency === 'TRY' ? Math.round(debt.amount / exchangeRate.USDTRY) : debt.amount;
-    return sum + amountInUSD;
+    // Convert to selected display currency
+    return sum + convertCurrency(debt.amount, debt.currency || 'USD', currency);
   }, 0);
 
   const totalLongTerm = longTermDebts.reduce((sum, debt) => {
-    // Convert TRY to USD for display
-    const amountInUSD = debt.currency === 'TRY' ? Math.round(debt.amount / exchangeRate.USDTRY) : debt.amount;
-    return sum + amountInUSD;
+    // Convert to selected display currency
+    return sum + convertCurrency(debt.amount, debt.currency || 'USD', currency);
   }, 0);
 
   const totalPending = debts
     .filter(debt => debt.status === "pending")
     .reduce((sum, debt) => {
-      const amountInUSD = debt.currency === 'TRY' ? Math.round(debt.amount / exchangeRate.USDTRY) : debt.amount;
-      return sum + amountInUSD;
+      return sum + convertCurrency(debt.amount, debt.currency || 'USD', currency);
     }, 0);
 
   const totalPaid = debts
     .filter(debt => debt.status === "paid")
     .reduce((sum, debt) => {
-      const amountInUSD = debt.currency === 'TRY' ? Math.round(debt.amount / exchangeRate.USDTRY) : debt.amount;
-      return sum + amountInUSD;
+      return sum + convertCurrency(debt.amount, debt.currency || 'USD', currency);
     }, 0);
+
+  const currencySymbol = currency === 'USD' ? '$' : '₺';
 
   const handleAddDebt = () => {
     const newDebt: Debt = {
@@ -284,7 +303,7 @@ const DebtPage = () => {
               <CardTitle className="text-base">Short-Term Debt</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold finance-negative">${totalShortTerm.toLocaleString()}</p>
+              <p className="text-2xl font-bold finance-negative">{currencySymbol}{Math.round(totalShortTerm).toLocaleString()}</p>
             </CardContent>
           </Card>
           
@@ -293,7 +312,7 @@ const DebtPage = () => {
               <CardTitle className="text-base">Long-Term Debt</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-muted-foreground">${totalLongTerm.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-muted-foreground">{currencySymbol}{Math.round(totalLongTerm).toLocaleString()}</p>
             </CardContent>
           </Card>
           
@@ -302,7 +321,7 @@ const DebtPage = () => {
               <CardTitle className="text-base">Total Pending</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold finance-negative">${totalPending.toLocaleString()}</p>
+              <p className="text-2xl font-bold finance-negative">{currencySymbol}{Math.round(totalPending).toLocaleString()}</p>
             </CardContent>
           </Card>
           
@@ -311,7 +330,7 @@ const DebtPage = () => {
               <CardTitle className="text-base">Total Paid</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold finance-positive">${totalPaid.toLocaleString()}</p>
+              <p className="text-2xl font-bold finance-positive">{currencySymbol}{Math.round(totalPaid).toLocaleString()}</p>
             </CardContent>
           </Card>
         </div>
@@ -339,35 +358,38 @@ const DebtPage = () => {
                     <div>Amount</div>
                     <div className="text-right">Actions</div>
                   </div>
-                  {shortTermDebts.map((debt) => (
-                    <div
-                      key={debt.id}
-                      className="grid grid-cols-7 p-3 border-t items-center"
-                    >
-                      <div className="col-span-2">{debt.title}</div>
-                      <div>{debt.creditor}</div>
-                      <div>{formatDeadline(debt.deadline)}</div>
-                      <div>
-                        <Badge className={debt.status === "pending" ? 
-                          "bg-negative/20 text-negative" : 
-                          "bg-positive/20 text-positive"
-                        }>
-                          {debt.status.charAt(0).toUpperCase() + debt.status.slice(1)}
-                        </Badge>
+                  {shortTermDebts.map((debt) => {
+                    const displayAmount = convertCurrency(debt.amount, debt.currency || 'USD', currency);
+                    return (
+                      <div
+                        key={debt.id}
+                        className="grid grid-cols-7 p-3 border-t items-center"
+                      >
+                        <div className="col-span-2">{debt.title}</div>
+                        <div>{debt.creditor}</div>
+                        <div>{formatDeadline(debt.deadline)}</div>
+                        <div>
+                          <Badge className={debt.status === "pending" ? 
+                            "bg-negative/20 text-negative" : 
+                            "bg-positive/20 text-positive"
+                          }>
+                            {debt.status.charAt(0).toUpperCase() + debt.status.slice(1)}
+                          </Badge>
+                        </div>
+                        <div className="font-medium">
+                          {currencySymbol}{Math.round(displayAmount).toLocaleString()}
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(debt)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteDebt(debt.id)}>
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="font-medium">
-                        {debt.currency === 'TRY' ? '₺' : '$'}{debt.amount.toLocaleString()}
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(debt)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteDebt(debt.id)}>
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </TabsContent>
               
@@ -381,35 +403,38 @@ const DebtPage = () => {
                     <div>Amount</div>
                     <div className="text-right">Actions</div>
                   </div>
-                  {longTermDebts.map((debt) => (
-                    <div
-                      key={debt.id}
-                      className="grid grid-cols-7 p-3 border-t items-center"
-                    >
-                      <div className="col-span-2">{debt.title}</div>
-                      <div>{debt.creditor}</div>
-                      <div>{formatDeadline(debt.deadline)}</div>
-                      <div>
-                        <Badge className={debt.status === "pending" ? 
-                          "bg-negative/20 text-negative" : 
-                          "bg-positive/20 text-positive"
-                        }>
-                          {debt.status.charAt(0).toUpperCase() + debt.status.slice(1)}
-                        </Badge>
+                  {longTermDebts.map((debt) => {
+                    const displayAmount = convertCurrency(debt.amount, debt.currency || 'USD', currency);
+                    return (
+                      <div
+                        key={debt.id}
+                        className="grid grid-cols-7 p-3 border-t items-center"
+                      >
+                        <div className="col-span-2">{debt.title}</div>
+                        <div>{debt.creditor}</div>
+                        <div>{formatDeadline(debt.deadline)}</div>
+                        <div>
+                          <Badge className={debt.status === "pending" ? 
+                            "bg-negative/20 text-negative" : 
+                            "bg-positive/20 text-positive"
+                          }>
+                            {debt.status.charAt(0).toUpperCase() + debt.status.slice(1)}
+                          </Badge>
+                        </div>
+                        <div className="font-medium">
+                          {currencySymbol}{Math.round(displayAmount).toLocaleString()}
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(debt)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteDebt(debt.id)}>
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="font-medium">
-                        {debt.currency === 'TRY' ? '₺' : '$'}{debt.amount.toLocaleString()}
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(debt)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteDebt(debt.id)}>
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </TabsContent>
             </Tabs>

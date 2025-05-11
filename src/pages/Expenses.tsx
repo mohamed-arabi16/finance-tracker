@@ -1,12 +1,11 @@
-
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockExpenses, exchangeRate } from "@/data/mockData";
+import { mockExpenses, convertCurrency } from "@/data/mockData";
 import { Expense, ExpenseType } from "@/types/finance";
 import { format } from "date-fns";
 import { Plus, Edit, Trash } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,6 +24,28 @@ const Expenses = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const { toast } = useToast();
+  const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
+    const saved = localStorage.getItem('defaultCurrency');
+    return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
+  });
+  
+  // Update when currency changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('defaultCurrency');
+      if (saved === 'USD' || saved === 'TRY') {
+        setCurrency(saved);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('exchangeRateUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('exchangeRateUpdated', handleStorageChange);
+    };
+  }, []);
 
   // Form state
   const [formData, setFormData] = useState<{
@@ -46,17 +67,15 @@ const Expenses = () => {
   const totalRecurring = expenses
     .filter(expense => expense.type === "recurring")
     .reduce((sum, expense) => {
-      // Convert TRY to USD for display
-      const amountInUSD = expense.currency === 'TRY' ? Math.round(expense.amount / exchangeRate.USDTRY) : expense.amount;
-      return sum + amountInUSD;
+      // Convert to selected display currency
+      return sum + convertCurrency(expense.amount, expense.currency || 'USD', currency);
     }, 0);
 
   const totalOneTime = expenses
     .filter(expense => expense.type === "one-time")
     .reduce((sum, expense) => {
-      // Convert TRY to USD for display
-      const amountInUSD = expense.currency === 'TRY' ? Math.round(expense.amount / exchangeRate.USDTRY) : expense.amount;
-      return sum + amountInUSD;
+      // Convert to selected display currency
+      return sum + convertCurrency(expense.amount, expense.currency || 'USD', currency);
     }, 0);
 
   const handleAddExpense = () => {
@@ -148,11 +167,13 @@ const Expenses = () => {
     if (!acc[category]) {
       acc[category] = 0;
     }
-    // Convert to USD for display
-    const amountInUSD = expense.currency === 'TRY' ? Math.round(expense.amount / exchangeRate.USDTRY) : expense.amount;
-    acc[category] += amountInUSD;
+    // Convert to display currency
+    const amountConverted = convertCurrency(expense.amount, expense.currency || 'USD', currency);
+    acc[category] += amountConverted;
     return acc;
   }, {} as Record<string, number>);
+
+  const currencySymbol = currency === 'USD' ? '$' : '₺';
 
   return (
     <Layout>
@@ -266,7 +287,7 @@ const Expenses = () => {
               <CardTitle className="text-base">Monthly Recurring</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold finance-negative">${totalRecurring.toLocaleString()}</p>
+              <p className="text-2xl font-bold finance-negative">{currencySymbol}{totalRecurring.toLocaleString()}</p>
             </CardContent>
           </Card>
           
@@ -275,7 +296,7 @@ const Expenses = () => {
               <CardTitle className="text-base">One-Time Expenses</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold finance-negative">${totalOneTime.toLocaleString()}</p>
+              <p className="text-2xl font-bold finance-negative">{currencySymbol}{totalOneTime.toLocaleString()}</p>
             </CardContent>
           </Card>
         </div>
@@ -291,7 +312,7 @@ const Expenses = () => {
               {Object.entries(expensesByCategory).map(([category, amount]) => (
                 <div key={category} className="p-4 border rounded-md">
                   <div className="text-sm text-muted-foreground mb-1">{category}</div>
-                  <div className="text-lg font-semibold finance-negative">${amount.toLocaleString()}</div>
+                  <div className="text-lg font-semibold finance-negative">{currencySymbol}{amount.toLocaleString()}</div>
                 </div>
               ))}
             </div>
@@ -313,37 +334,40 @@ const Expenses = () => {
                 <div>Amount</div>
                 <div className="text-right">Actions</div>
               </div>
-              {expenses.map((expense) => (
-                <div
-                  key={expense.id}
-                  className="grid grid-cols-7 p-3 border-t items-center"
-                >
-                  <div className="col-span-2">
-                    <div>{expense.title}</div>
+              {expenses.map((expense) => {
+                const displayAmount = convertCurrency(expense.amount, expense.currency || 'USD', currency);
+                return (
+                  <div
+                    key={expense.id}
+                    className="grid grid-cols-7 p-3 border-t items-center"
+                  >
+                    <div className="col-span-2">
+                      <div>{expense.title}</div>
+                    </div>
+                    <div>{format(expense.date, "MMM d, yyyy")}</div>
+                    <div>
+                      <Badge className={expense.type === "recurring" ? 
+                        "bg-negative/20 text-negative" : 
+                        "bg-muted text-muted-foreground"
+                      }>
+                        {expense.type === "recurring" ? "Monthly" : "One-time"}
+                      </Badge>
+                    </div>
+                    <div>{expense.category || "Uncategorized"}</div>
+                    <div className="font-medium text-negative">
+                      {currencySymbol}{Math.round(displayAmount).toLocaleString()}
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(expense)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div>{format(expense.date, "MMM d, yyyy")}</div>
-                  <div>
-                    <Badge className={expense.type === "recurring" ? 
-                      "bg-negative/20 text-negative" : 
-                      "bg-muted text-muted-foreground"
-                    }>
-                      {expense.type === "recurring" ? "Monthly" : "One-time"}
-                    </Badge>
-                  </div>
-                  <div>{expense.category || "Uncategorized"}</div>
-                  <div className="font-medium text-negative">
-                    {expense.currency === 'TRY' ? '₺' : '$'}{expense.amount.toLocaleString()}
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(expense)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
