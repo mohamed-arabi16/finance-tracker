@@ -19,27 +19,27 @@ import {
   CreditCard, 
   Coins, 
   Settings,
-  Currency
+  Currency,
+  LogOut
 } from "lucide-react";
 import { ReactNode } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useExchangeRate } from "@/hooks/useExchangeRate";
+import { Outlet } from "react-router-dom";
+import { useSupabase } from "@/contexts/SupabaseContext";
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-const Layout = ({ children }: LayoutProps) => {
+const Layout = () => {
   // Load currency preference from localStorage if available
   const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
     const saved = localStorage.getItem('defaultCurrency');
     return (saved === 'USD' || saved === 'TRY') ? saved : 'USD';
   });
 
-  // Get exchange rate using the new hook
+  // Get exchange rate using the hook
   const { exchangeRate, isLoading } = useExchangeRate();
+  const { signOut } = useSupabase();
 
   // Save currency preference to localStorage when it changes and notify other components
   useEffect(() => {
@@ -51,7 +51,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar />
+        <AppSidebar onSignOut={signOut} />
         <main className="flex-1 p-6 lg:px-8">
           <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
@@ -79,7 +79,7 @@ const Layout = ({ children }: LayoutProps) => {
               </div>
               <SidebarTrigger />
             </div>
-            {children}
+            <Outlet />
           </div>
         </main>
       </div>
@@ -87,7 +87,7 @@ const Layout = ({ children }: LayoutProps) => {
   );
 };
 
-const AppSidebar = () => {
+const AppSidebar = ({ onSignOut }: { onSignOut: () => Promise<{ error?: Error }> }) => {
   const menuItems = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/" },
     { title: "Income", icon: ArrowDown, href: "/income" },
@@ -96,6 +96,10 @@ const AppSidebar = () => {
     { title: "Assets", icon: Coins, href: "/assets" },
     { title: "Settings", icon: Settings, href: "/settings" }
   ];
+
+  const handleSignOut = async () => {
+    await onSignOut();
+  };
 
   return (
     <Sidebar>
@@ -120,6 +124,12 @@ const AppSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleSignOut} className="flex items-center gap-3 text-red-400 hover:text-red-500">
+                  <LogOut size={18} />
+                  <span>Sign Out</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

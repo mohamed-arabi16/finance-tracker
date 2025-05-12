@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SupabaseContextType {
   user: User | null;
@@ -142,30 +142,22 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
   const refreshExchangeRate = async () => {
     try {
-      // Create a Supabase function call to update exchange rate
-      const { error } = await supabase.functions.invoke('update-exchange-rates');
+      // Call the Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('update-exchange-rates');
       
       if (error) throw error;
       
-      // Fetch the updated rate
-      const { data, error: fetchError } = await supabase
-        .from('exchange_rates')
-        .select('rate, updated_at')
-        .eq('from_currency', 'USD')
-        .eq('to_currency', 'TRY')
-        .single();
-      
-      if (fetchError) throw fetchError;
-      
-      // Update localStorage
-      localStorage.setItem('currentExchangeRate', data.rate.toString());
-      
-      // Notify components of the change
-      window.dispatchEvent(new Event('exchangeRateUpdated'));
+      if (data && data.rate) {
+        // Update localStorage
+        localStorage.setItem('currentExchangeRate', data.rate.toString());
+        
+        // Notify components of the change
+        window.dispatchEvent(new Event('exchangeRateUpdated'));
+      }
       
       toast({
         title: "Exchange rate updated",
-        description: `Latest USD/TRY rate: ${data.rate}`
+        description: `Latest USD/TRY rate: ${data.rate || 'Updated'}`
       });
     } catch (error) {
       toast({
