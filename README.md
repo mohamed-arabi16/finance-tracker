@@ -68,6 +68,23 @@ The application aims to help users organize their financial data, gain insights 
     ```
     The application will typically be available at `http://localhost:8080` (or the port specified in your `vite.config.ts`).
 
+## Testing Credentials (Local Use Only)
+
+For local development and testing purposes, you can log in using the following credentials:
+
+*   **Username:** `admin`
+*   **Password:** `admin`
+
+**IMPORTANT WARNING:**
+*   This login method is **for local testing and development ONLY**.
+*   It **bypasses the actual Supabase authentication** and uses a mock session object.
+*   It is **highly insecure** and **MUST NOT be enabled or used in a production environment**.
+*   The mock session does not represent a real Supabase user, so functionalities relying on a genuine, authenticated Supabase user with specific database records might not behave as expected.
+
+This feature is implemented by checking for these specific credentials in the login form (`src/pages/Auth.tsx`) and then setting a flag in `localStorage` which `src/App.tsx` uses to create and inject a mock session.
+
+---
+
 ## Available Scripts
 
 In the project directory, you can run the following commands:

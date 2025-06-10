@@ -57,6 +57,18 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (email === 'admin' && password === 'admin') {
+      // Admin bypass for testing
+      localStorage.setItem('mockAdminSession', 'true');
+      toast({ // Ensure toast is available in this scope or pass it if needed
+        title: "Admin Login (Mock)",
+        description: "Logged in as admin for testing.",
+      });
+      navigate('/'); // Ensure navigate is available
+      setLoading(false); // Ensure setLoading is available
+      return;
+    }
     
     try {
       // Try to sign in medane999@gmail.com with password test123

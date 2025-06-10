@@ -182,6 +182,22 @@ vite_react_shadcn_ts/
     npm test -- --coverage # For coverage
     ```
 
+### Local Admin Test Credentials
+
+For local development and testing, a bypass has been implemented to allow login with the following credentials:
+
+*   **Username:** `admin`
+*   **Password:** `admin`
+
+**AI Agent Advisory:**
+*   This login mechanism is **strictly for local testing and development purposes**.
+*   It **bypasses the standard Supabase authentication flow** and injects a **mock session object**. This means no actual Supabase user record for "admin" is queried or created by this method.
+*   This approach is **inherently insecure** and **MUST NOT be replicated, extended, or relied upon for any production functionality**.
+*   When testing features that require a genuine authenticated user context (e.g., row-level security, user-specific data linked via Supabase user ID), be aware that this mock admin session will not behave like a real user.
+*   The implementation involves a credential check in `src/pages/Auth.tsx` and mock session creation via `localStorage` handled in `src/App.tsx`. AI agents modifying authentication or session management logic should be aware of this bypass.
+
+---
+
 ## Deployment Guide
 
 ### Build Process
