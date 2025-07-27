@@ -5,11 +5,12 @@ import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   session: Session | null;
+  loading: boolean;
 }
 
-const ProtectedRoute = ({ session }: ProtectedRouteProps) => {
-  // If we haven't checked the session yet, show a loading state
-  if (session === undefined) {
+const ProtectedRoute = ({ session, loading }: ProtectedRouteProps) => {
+  // If loading, show a loading state
+  if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
