@@ -1,32 +1,35 @@
-# Project Agents.md Guide
+# Project Agents.md Guide for OpenAI Codex
 
-This Agents.md file provides comprehensive guidance for AI agents working with the `vite_react_shadcn_ts` codebase.
+This Agents.md file provides comprehensive guidance for OpenAI Codex and other AI agents working with this codebase.
 
 ## Project Overview
 
-This project is a modern financial management application designed to help users track their income, expenses, debts, and assets. It utilizes a tech stack centered around React, TypeScript, Vite, and Shadcn/ui for a high-performance user interface, with Supabase providing backend services.
+This is a modern frontend project based on React 18, TypeScript, and Vite. It's suitable for building high-performance Single Page Applications (SPA) with an integrated modern development toolchain and best practices. This project is a modern financial management application designed to help users track their income, expenses, debts, and assets.
 
-**Purpose:** To provide a clear and user-friendly platform for personal finance management.
-**Functionality:** User authentication, tracking of financial transactions (income, expenses), management of debts and assets, financial summaries and dashboards.
-**Applicable Scenarios:** Personal finance tracking, budgeting, asset management.
-**Problems Solved:** Helps users organize their financial data, gain insights into their spending habits, and manage their overall financial health.
+### Purpose and Functionality
+- **Purpose:** To provide a clear and user-friendly platform for personal finance management.
+- **Functionality:** User authentication, tracking of financial transactions (income, expenses), management of debts and assets, financial summaries and dashboards.
+- **Applicable Scenarios:** Personal finance tracking, budgeting, asset management.
+- **Problems Solved:** Helps users organize their financial data, gain insights into their spending habits, and manage their overall financial health.
 
 ## Tech Stack
 
-*   **Frontend Framework:** React 18 + TypeScript
-*   **Build Tool:** Vite
-*   **UI Components:** Shadcn/ui (built on Radix UI and Tailwind CSS)
-*   **Styling:** Tailwind CSS
-*   **Routing:** React Router v6
-*   **State Management:** Primarily @tanstack/react-query for server state; component state and context for UI state.
-*   **Forms:** React Hook Form with Zod for validation
-*   **HTTP Client / Backend Integration:** Supabase Client (`@supabase/supabase-js`)
-*   **Linting:** ESLint
-*   **Code Quality:** TypeScript
-*   **Development Server:** Vite
+- **Frontend Framework:** React 18 + TypeScript
+- **Build Tool:** Vite
+- **UI Components:** Shadcn/ui (built on Radix UI and Tailwind CSS)
+- **Styling:** Tailwind CSS / Styled-components
+- **Routing:** React Router v6
+- **State Management:** Zustand / Redux Toolkit / @tanstack/react-query
+- **Forms:** React Hook Form with Zod for validation
+- **HTTP Client / Backend Integration:** Axios / Supabase Client (`@supabase/supabase-js`)
+- **Linting:** ESLint + Prettier
+- **Code Quality:** TypeScript + Husky
+- **Testing Framework:** Vitest + React Testing Library
+- **Deployment:** Vercel, Netlify, AWS Amplify
 
-## Project Structure for AI Agent Navigation
+## Project Structure
 
+```
 vite_react_shadcn_ts/
 ├── public/                 # Static assets (AI agents should generally not modify these directly)
 │   ├── favicon.ico
@@ -56,208 +59,268 @@ vite_react_shadcn_ts/
 │   ├── functions/          # Supabase edge functions
 │   └── config.toml
 ├── tests/                  # Test files (AI agents should maintain and extend if present)
-├── .env.example            # Example environment variables (if created)
+├── docs/                   # Project documentation
+├── .env.example            # Environment variables example
 ├── package.json            # Project dependencies and scripts
 ├── vite.config.ts          # Vite build configuration
 ├── tsconfig.json           # TypeScript configuration
 └── README.md               # Project documentation (AI agents may update this)
+```
 
 ## Development Guidelines
 
 ### Code Style
-*   **Formatting:** Follow existing code style. Consider integrating Prettier if not already strictly enforced by ESLint.
-*   **ESLint:** Adhere to the rules defined in `.eslintrc.js` (or `eslint.config.js`). Run `npm run lint` to check.
-*   **TypeScript:** Utilize TypeScript for all new code. Follow TypeScript best practices, including strong typing for props, state, and function signatures. The project currently uses some relaxed settings (`noImplicitAny: false`); aim for stricter typing where feasible.
-*   **Readability:** Keep code clean, well-commented (especially for complex logic), and readable.
+- **Formatting:** Use consistent code formatting tools like Prettier.
+- **Best Practices:** Follow language-specific best practices (TypeScript, React).
+- **Readability:** Keep code clean, well-commented, and readable.
 
 ### Naming Conventions
-*   **Files:**
-    *   Components: `PascalCase.tsx` (e.g., `UserProfile.tsx`)
-    *   Hooks: `useCamelCase.ts` (e.g., `useAuthentication.ts`)
-    *   Other `.ts` / `.tsx` files: `camelCase.ts` or `PascalCase.tsx` depending on convention (observe existing files).
-*   **Variables:** `camelCase`
-*   **Functions:** `camelCase`
-*   **Classes/Interfaces/Types:** `PascalCase`
-*   **CSS (Tailwind):** Utility-first. Custom CSS classes should be prefixed if necessary (e.g., `app-`).
+- **Files:**
+  - Components: `PascalCase.tsx`
+  - Hooks: `useCamelCase.ts`
+  - Other `.ts` / `.tsx` files: `camelCase.ts` or `PascalCase.tsx`
+- **Variables:** `camelCase`
+- **Functions:** `camelCase`
+- **Classes/Interfaces/Types:** `PascalCase`
 
 ### React Components
-*   **Functional Components:** Use functional components with Hooks.
-*   **Props:** Define TypeScript interfaces for all component props.
-*   **Single Responsibility:** Keep components small and focused on a single piece of functionality.
-*   **Shadcn/ui:** Leverage components from `src/components/ui/` and follow Shadcn/ui patterns for composition and styling.
+- **Functional Components:** Use functional components with Hooks.
+- **Props:** Define TypeScript interfaces for all component props.
+- **Single Responsibility:** Keep components small and focused.
+- **Example: Button Component**
+  ```typescript
+  interface ButtonProps {
+    variant: 'primary' | 'secondary' | 'danger';
+    size?: 'small' | 'medium' | 'large';
+    disabled?: boolean;
+    onClick?: () => void;
+    children: React.ReactNode;
+  }
+
+  export const Button: React.FC<ButtonProps> = ({
+    variant,
+    size = 'medium',
+    disabled = false,
+    onClick,
+    children
+  }) => {
+    return (
+      <button
+        className={`btn btn-${variant} btn-${size}`}
+        disabled={disabled}
+        onClick={onClick}
+      >
+        {children}
+      </button>
+    );
+  };
+  ```
+
+### State Management (Zustand Example)
+```typescript
+// store/userStore.ts
+import { create } from 'zustand';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface UserState {
+  user: User | null;
+  isLoading: boolean;
+  setUser: (user: User) => void;
+  clearUser: () => void;
+  setLoading: (loading: boolean) => void;
+}
+
+export const useUserStore = create<UserState>((set) => ({
+  user: null,
+  isLoading: false,
+  setUser: (user) => set({ user }),
+  clearUser: () => set({ user: null }),
+  setLoading: (isLoading) => set({ isLoading }),
+}));
+```
+
+### API Service (Axios Example)
+```typescript
+// services/api.ts
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 10000,
+});
+
+// Request interceptor
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+```
 
 ### Git Workflow
-*   **Branch Naming:** `feature/descriptive-name`, `bugfix/issue-number-description`, `chore/task-description`.
-*   **Commit Messages:** Follow conventional commit format (e.g., `feat: add user profile page`, `fix: resolve login bug #123`).
-*   **Pull Requests (PRs):**
-    *   Include a clear description of changes.
-    *   Reference related issues.
-    *   Ensure all tests (if applicable) and lint checks pass.
-    *   Keep PRs focused on a single concern.
+- **Branch Naming:** `feature/descriptive-name`, `bugfix/issue-number`, `chore/task-description`.
+- **Commit Messages:** Follow conventional commit format (e.g., `feat: add user profile page`).
+- **Pull Requests (PRs):**
+  - Clear description of changes.
+  - Reference related issues.
+  - Ensure all tests and lint checks pass.
+  - Include screenshots for UI changes.
 
 ## Environment Setup
 
 ### Development Requirements
-*   **Node.js:** Version specified in project's `.nvmrc` or `package.json` (engines field if present - currently not, assume >= 18.0.0 as a modern standard).
-*   **Package Manager:** `npm` (based on `package-lock.json`).
-*   **Supabase Account:** Required for backend functionality. Credentials should be stored in environment variables.
+- **Node.js:** >= 18.0.0
+- **Package Manager:** npm >= 8.0.0 or yarn >= 1.22.0
+- **Supabase Account:** Required for backend functionality.
 
 ### Installation Steps
-1.  **Clone the project:**
-    ```bash
-    git clone <repository-url>
-    cd vite_react_shadcn_ts
-    ```
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Set up environment variables:**
-    Create a `.env` file in the project root (copy from `.env.example` if it exists, or create one).
-    Add your Supabase URL and Anon Key:
-    ```env
-    VITE_SUPABASE_URL=your_supabase_url
-    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-    # Add other environment variables as needed
-    ```
-4.  **Initialize Supabase (if schema needs to be applied):**
-    Refer to Supabase documentation and `supabase/` directory for schema migration if setting up a new instance.
-5.  **Start development server:**
-    ```bash
-    npm run dev
-    ```
-    The application should be accessible at `http://localhost:8080` (or as specified in Vite config).
-
-## Core Feature Implementation
-
-### Supabase Integration
-*   The Supabase client is initialized in `src/integrations/supabase/client.ts`.
-*   Authentication is handled via Supabase Auth, as seen in `src/App.tsx` and `src/components/ProtectedRoute.tsx`.
-*   Data fetching and mutations likely use `@tanstack/react-query` in conjunction with Supabase client calls. Example:
-    ```typescript
-    // Example of fetching data with React Query and Supabase
-    // (Illustrative - adapt to actual project patterns)
-    import { useQuery } from '@tanstack/react-query';
-    import { supabase } from '@/integrations/supabase/client';
-
-    async function fetchUserData(userId: string) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      if (error) throw error;
-      return data;
-    }
-
-    function UserProfile({ userId }: { userId: string }) {
-      const { data, isLoading, error } = useQuery({
-        queryKey: ['user', userId],
-        queryFn: () => fetchUserData(userId),
-      });
-
-      if (isLoading) return <p>Loading...</p>;
-      if (error) return <p>Error loading user data.</p>;
-      // Render user data
-      return <div>{data?.username}</div>;
-    }
-    ```
-
-### Shadcn/ui Components
-*   Components are heavily utilized from `src/components/ui/`.
-*   These are typically composed and styled using Tailwind CSS.
-*   Refer to the official Shadcn/ui documentation for usage and customization.
+1. **Clone the project:**
+   ```bash
+   git clone <repository-url>
+   ```
+2. **Navigate to project directory:**
+   ```bash
+   cd vite_react_shadcn_ts
+   ```
+3. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+4. **Set up environment variables:**
+   Create a `.env` file and add your Supabase URL and Anon Key:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+5. **Start development server:**
+   ```bash
+   npm run dev
+   ```
 
 ## Testing Strategy
 
-*   **Current Status:** No explicit testing framework (like Vitest, Jest, or React Testing Library) setup is immediately visible from `package.json` scripts or a dedicated `tests/` directory with test files (though an empty `tests/` directory might exist from the template).
-*   **To Implement/Maintain:**
-    *   **Unit Tests:** For individual components, hooks, and utility functions. Vitest or Jest with React Testing Library is recommended.
-    *   **Integration Tests:** To test interactions between components and services (e.g., Supabase calls).
-    *   **End-to-End Tests:** (Optional, for larger features) Using tools like Playwright or Cypress.
-*   **Running Tests (if configured):**
-    ```bash
-    # Standard command, adapt if scripts differ
-    npm test
-    npm test -- --coverage # For coverage
-    ```
+### Unit Testing
+- **Framework:** Vitest + React Testing Library
+- **Coverage:** Aim for high test coverage for critical components and logic.
+- **Organization:** Keep test files close to the source files (e.g., `Button.test.tsx` for `Button.tsx`).
+- **Example:**
+  ```typescript
+  // tests/components/Button.test.tsx
+  import { render, screen, fireEvent } from '@testing-library/react';
+  import { Button } from '../src/components/Button';
 
-### Local Admin Test Credentials
+  describe('Button Component', () => {
+    test('renders button with text', () => {
+      render(<Button variant="primary">Click me</Button>);
+      expect(screen.getByText('Click me')).toBeInTheDocument();
+    });
 
-For local development and testing, a bypass has been implemented to allow login with the following credentials:
+    test('calls onClick when clicked', () => {
+      const handleClick = vi.fn();
+      render(
+        <Button variant="primary" onClick={handleClick}>
+          Click me
+        </Button>
+      );
 
-*   **Username:** `admin`
-*   **Password:** `admin`
+      fireEvent.click(screen.getByText('Click me'));
+      expect(handleClick).toHaveBeenCalledTimes(1);
+    });
+  });
+  ```
 
-**AI Agent Advisory:**
-*   This login mechanism is **strictly for local testing and development purposes**.
-*   It **bypasses the standard Supabase authentication flow** and injects a **mock session object**. This means no actual Supabase user record for "admin" is queried or created by this method.
-*   This approach is **inherently insecure** and **MUST NOT be replicated, extended, or relied upon for any production functionality**.
-*   When testing features that require a genuine authenticated user context (e.g., row-level security, user-specific data linked via Supabase user ID), be aware that this mock admin session will not behave like a real user.
-*   The implementation involves a credential check in `src/pages/Auth.tsx` and mock session creation via `localStorage` handled in `src/App.tsx`. AI agents modifying authentication or session management logic should be aware of this bypass.
+### Programmatic Checks
+Before submitting changes, run:
+```bash
+# Lint check
+npm run lint
 
----
+# Type check (if configured)
+npm run type-check
+
+# Build check
+npm run build
+```
 
 ## Deployment Guide
 
 ### Build Process
-*   Generate a production build:
-    ```bash
-    npm run build
-    ```
-    This will create a `dist/` folder with optimized static assets.
+```bash
+# Build command
+npm run build
+```
 
 ### Deployment Steps
-1.  **Prepare Production Environment:** Ensure your hosting provider (e.g., Vercel, Netlify, AWS Amplify) is configured.
-2.  **Configure Environment Variables:** Set up `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and any other production-specific environment variables in your hosting provider's settings.
-3.  **Deploy:** Connect your Git repository to the hosting provider or upload the `dist/` folder.
-4.  **Verify:** Test the deployed application thoroughly.
+1. Prepare production environment.
+2. Configure environment variables.
+3. Execute deployment scripts.
+4. Verify deployment results.
 
-## Programmatic Checks for AI Agents
+## Performance Optimization
 
-Before submitting changes, AI agents should ensure the following checks pass:
+### Frontend Optimization
+- **Code Splitting:** Use `React.lazy` for route-based or component-based splitting.
+- **Lazy Loading:** Lazy load images and other assets.
+- **Caching:** Implement caching strategies for assets and API requests.
+- **Memoization:** Use `React.memo`, `useMemo`, and `useCallback` to prevent unnecessary re-renders.
 
-1.  **Lint Check:**
-    ```bash
-    npm run lint
-    ```
-2.  **Build Check:**
-    ```bash
-    npm run build
-    ```
-    (This also implicitly checks for TypeScript errors if `tsc --noEmit` is part of the build or a separate script).
+### Backend Optimization
+- **Database Query Optimization:** Ensure efficient Supabase queries.
+- **Caching:** Use caching mechanisms for frequently accessed data.
+- **Load Balancing:** (If applicable) Distribute traffic across multiple instances.
 
-All checks must pass before code generated or modified by an AI agent can be merged.
+## Security Considerations
 
-## Environment Variables
+### Data Security
+- **Input Validation:** Use Zod for schema validation.
+- **SQL Injection Protection:** Supabase handles this, but be mindful of raw SQL queries.
+- **XSS Protection:** React helps prevent XSS, but be cautious with `dangerouslySetInnerHTML`.
 
-Key environment variables required by the project:
+### Authentication & Authorization
+- **User Authentication Flow:** Handled by Supabase Auth.
+- **Permission Control:** Implement role-based access control (RBAC) using Supabase RLS.
+- **Token Management:** Securely manage JWTs provided by Supabase.
 
-*   `VITE_SUPABASE_URL`: The URL for your Supabase project.
-*   `VITE_SUPABASE_ANON_KEY`: The anonymous public key for your Supabase project.
-*   (Add any other variables like API keys for financial data sources if integrated)
+## Monitoring and Logging
 
-Ensure these are present in your `.env` file for local development and configured in your deployment environment.
+- **Application Monitoring:** Use tools like Sentry or LogRocket for performance and error tracking.
+- **Log Management:** Implement a structured logging strategy.
 
-## Common Issues & Solutions
+## Common Issues
 
-*   **Issue: Supabase connection errors.**
-    *   **Solution:** Verify `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are correct in your `.env` file and that your Supabase instance is running. Check network connectivity.
-*   **Issue: Tailwind CSS classes not applying.**
-    *   **Solution:** Ensure `tailwind.config.ts` is correctly configured and that your `src/index.css` (or main CSS file) includes Tailwind directives (`@tailwind base; @tailwind components; @tailwind utilities;`). Make sure the Vite development server has restarted after changes to Tailwind config.
-*   **Issue: Type errors after installing new packages.**
-    *   **Solution:** Install corresponding `@types/<package-name>` if available. Ensure `tsconfig.json` is correctly configured. Run `npm run build` or `tsc --noEmit` to get detailed type errors.
+- **Issue 1: Vite Development Server Slow Startup**
+  - **Solution:** Check dependency pre-build cache, use `npm run dev -- --force`, optimize `vite.config.ts`.
+- **Issue 2: TypeScript Type Errors**
+  - **Solution:** Ensure correct `@types` are installed, check `tsconfig.json`, run `npm run type-check`.
+- **Issue 3: Supabase Connection Errors**
+  - **Solution:** Verify `.env` variables, check network, ensure Supabase instance is active.
 
 ## Reference Resources
 
-*   [React Documentation](https://react.dev/)
-*   [Vite Documentation](https://vitejs.dev/)
-*   [TypeScript Documentation](https://www.typescriptlang.org/docs/)
-*   [Tailwind CSS Documentation](https://tailwindcss.com/docs/)
-*   [Shadcn/ui Documentation](https://ui.shadcn.com/)
-*   [Supabase Documentation](https://supabase.com/docs/)
-*   [React Router Documentation](https://reactrouter.com/)
-*   [@tanstack/react-query Documentation](https://tanstack.com/query/latest/docs/react/overview)
-*   [ESLint Documentation](https://eslint.org/docs/latest/)
-
-This guide should help AI agents understand and contribute to the project effectively.
+- [React Official Documentation](https://react.dev/)
+- [Vite Official Documentation](https://vitejs.dev/)
+- [TypeScript Official Documentation](https://www.typescriptlang.org/)
+- [Supabase Documentation](https://supabase.com/docs/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs/)
+- [Shadcn/ui Documentation](https://ui.shadcn.com/)
+- [React Router Documentation](https://reactrouter.com/)
+- [Zustand Documentation](https://zustand-demo.pmnd.rs/)
+- [Vitest Documentation](https://vitest.dev/)
