@@ -79,6 +79,13 @@ CREATE TABLE public.exchange_rates (
   UNIQUE(from_currency, to_currency)
 );
 
+-- Simple table to demonstrate storing admin credentials
+CREATE TABLE public.admin_users (
+  id serial PRIMARY KEY,
+  username text NOT NULL UNIQUE,
+  password text NOT NULL
+);
+
 -- Enable Row Level Security
 ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.incomes ENABLE ROW LEVEL SECURITY;
@@ -162,5 +169,9 @@ CREATE POLICY exchange_rates_update ON public.exchange_rates
   FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- Insert initial exchange rate
-INSERT INTO public.exchange_rates (from_currency, to_currency, rate) 
+INSERT INTO public.exchange_rates (from_currency, to_currency, rate)
 VALUES ('USD', 'TRY', 38.76);
+
+-- Insert admin user credentials for demonstration purposes
+INSERT INTO public.admin_users (username, password)
+VALUES ('admin', '123');
