@@ -1,10 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockAssets, convertCurrency } from "@/data/mockData";
+import { convertCurrency } from "@/data/mockData";
+import { Asset } from "@/types/finance";
 import { Coins } from "lucide-react";
 import { useEffect, useState } from "react";
+import useSupabaseData from "@/hooks/useSupabaseData";
 
 const AssetList = () => {
+  const { data: assets, loading, error } = useSupabaseData<Asset>('assets');
   // Get currency from localStorage with state to ensure reactivity
   const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
     const saved = localStorage.getItem('defaultCurrency');
@@ -35,10 +38,18 @@ const AssetList = () => {
   const currencySymbol = currency === 'USD' ? '$' : '₺';
   
   // Calculate total asset value based on selected currency using the consistent conversion function
-  const totalValue = mockAssets.reduce((sum, asset) => {
-    const assetValueUSD = asset.amount * asset.currentPrice;
+  const totalValue = assets.reduce((sum, asset) => {
+    const assetValueUSD = asset.amount * asset.current_price;
     return sum + convertCurrency(assetValueUSD, 'USD', currency);
   }, 0);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <Card className="h-full">
@@ -56,11 +67,11 @@ const AssetList = () => {
       </CardHeader>
       <CardContent className="p-4">
         <div className="space-y-3">
-          {mockAssets.map((asset) => {
+          {assets.map((asset) => {
             // Calculate asset values using the consistent conversion function
-            const assetValueUSD = asset.amount * asset.currentPrice;
+            const assetValueUSD = asset.amount * asset.current_price;
             const displayValue = convertCurrency(assetValueUSD, 'USD', currency);
-            const unitPrice = convertCurrency(asset.currentPrice, 'USD', currency);
+            const unitPrice = convertCurrency(asset.current_price, 'USD', currency);
             
             return (
               <div
