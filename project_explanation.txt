@@ -1,0 +1,62 @@
+This project is a modern financial management application designed to help users track their income, expenses, debts, and assets. It utilizes a tech stack centered around React, TypeScript, Vite, and Shadcn/ui for a high-performance user interface, with Supabase providing backend services.
+
+## Key Features:
+
+- **User Authentication:** Secure sign-up and login functionality using Supabase Auth.
+- **Dashboard:** A central hub to view a summary of your financial situation, including available balance, net worth, upcoming income, and various debt/asset totals.
+- **Income Tracking:** Add, edit, and delete income entries. Incomes are categorized and can be in USD or TRY. The system differentiates between "received" and "expected" income.
+- **Expense Tracking:** Add, edit, and delete expense entries. Expenses can be "recurring" or "one-time" and are categorized. They can also be in USD or TRY.
+- **Debt Management:** Add, edit, and delete debts. Debts are classified as short-term or long-term, and their status can be "pending" or "paid."
+- **Asset Management:** Track various assets like silver, gold, crypto, and property. You can specify the amount, unit, and current price for each asset.
+- **Currency Conversion:** The application supports both USD and TRY and can display financial figures in the user's preferred currency. It uses an external API to fetch the latest exchange rates.
+- **Settings:** Users can customize their experience by setting a default currency, choosing whether to include long-term debt in their main balance calculation, and enabling/disabling dark mode and notifications.
+- **Data Export:** Users can download a CSV report of their financial data.
+- **Responsive Design:** The application is designed to work on both desktop and mobile devices.
+
+## Project Structure:
+
+The project follows a standard React project structure:
+- `src/`: Contains all the source code.
+- `src/components/`: Reusable UI components, organized by feature (assets, dashboard, debt, etc.) and a `ui` folder for generic components from `shadcn/ui`.
+- `src/pages/`: Components that represent the different pages of the application (Dashboard, Income, Expenses, etc.).
+- `src/hooks/`: Custom React hooks for functionalities like fetching data from Supabase and handling exchange rates.
+- `src/integrations/supabase/`: Code for interacting with the Supabase backend, including the client setup and database type definitions.
+- `src/lib/`: Utility functions.
+- `src/types/`: TypeScript type definitions for the application's data structures.
+- `public/`: Static assets like images and icons.
+- `supabase/`: Configuration and edge functions for the Supabase backend.
+
+## How it Works:
+
+The application is a single-page application (SPA) built with React and Vite. It uses React Router for navigation between different pages. The UI is built with `shadcn/ui` components, which are based on Radix UI and styled with Tailwind CSS.
+
+State management is handled through a combination of React's built-in state management (useState, useEffect) and React Context for global state like the authenticated user and session. Data fetching from the Supabase backend is managed using a custom hook `useSupabaseData`.
+
+The backend is powered by Supabase, which provides:
+- **Authentication:** Manages user sign-up and sign-in.
+- **Database:** A PostgreSQL database to store user data (incomes, expenses, debts, assets, and user settings). Row-level security (RLS) is used to ensure that users can only access their own data.
+- **Edge Functions:** A serverless function is used to periodically fetch and update the USD/TRY exchange rate from an external API.
+
+The application also includes a mock data layer (`src/data/mockData.ts`) for development and testing purposes. This allows the application to be run without a full Supabase backend setup. There's also a special "admin" login for local testing.
+
+## Functions:
+
+The application is divided into several key functional areas:
+
+- **Authentication:** `Auth.tsx` provides the login and registration forms. `ProtectedRoute.tsx` ensures that only authenticated users can access the main application. `SupabaseContext.tsx` manages the user's session.
+- **Dashboard (`Index.tsx`):** The main landing page, which displays a `FinanceSummary` component. This component calculates and displays key financial metrics like available balance, net worth, and upcoming income.
+- **Income/Expenses/Debt/Assets Pages:** Each of these pages (`Income.tsx`, `Expenses.tsx`, etc.) provides a dedicated interface for managing that specific type of financial item. They include features to add, edit, and delete items, as well as summary cards and lists of all items.
+- **Settings (`Settings.tsx`):** Allows the user to configure application-wide settings. These settings are stored in `localStorage` for persistence.
+- **Layout (`Layout.tsx`):** The main application layout, which includes the sidebar navigation and the main content area. It also handles the currency selection dropdown.
+- **Data Fetching:** The `useSupabaseData.tsx` hook provides a reusable way to fetch data from Supabase tables. The `supabaseClient.ts` file contains functions for all CRUD (Create, Read, Update, Delete) operations for each data type.
+- **Currency Conversion:** The `useExchangeRate.tsx` hook fetches the latest USD/TRY exchange rate and caches it. The `convertCurrency` function (in `mockData.ts`, but used throughout the app) uses this rate to display all financial values in the user's selected currency.
+
+## Little Details:
+
+- The project uses `clsx` and `tailwind-merge` for flexible and conflict-free CSS class management.
+- It uses `date-fns` for date formatting.
+- `lucide-react` provides the icons used throughout the application.
+- The sidebar is collapsible and its state is saved in a cookie.
+- Toasts are used to provide feedback to the user for actions like adding, editing, or deleting data.
+- The project includes a comprehensive `AGENTS.md` file with detailed instructions for AI agents working on the codebase.
+- There's a `supabase-schema.sql` file that defines the database schema and RLS policies for Supabase.
