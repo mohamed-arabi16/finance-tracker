@@ -1,11 +1,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockIncomes, convertCurrency } from "@/data/mockData";
-import { IncomeStatus } from "@/types/finance";
+import { convertCurrency } from "@/data/mockData";
+import { Income } from "@/types/finance";
 import { ArrowDown, Check, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
+import useSupabaseData from "@/hooks/useSupabaseData";
 
 const statusIcons = {
   received: <Check className="h-4 w-4" />,
@@ -18,6 +19,7 @@ const statusColors = {
 };
 
 const IncomeList = () => {
+  const { data: incomes, loading, error } = useSupabaseData<Income>('incomes');
   // Get currency from localStorage with state to ensure reactivity
   const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
     const saved = localStorage.getItem('defaultCurrency');
@@ -43,18 +45,26 @@ const IncomeList = () => {
   const currencySymbol = currency === 'USD' ? '$' : '₺';
   
   // Sort incomes by date, with most recent first
-  const sortedIncomes = [...mockIncomes].sort((a, b) => 
-    b.date.getTime() - a.date.getTime()
+  const sortedIncomes = [...incomes].sort((a, b) =>
+    new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   // Calculate totals using the consistent conversion function
-  const totalReceived = mockIncomes
+  const totalReceived = incomes
     .filter(income => income.status === "received")
     .reduce((sum, income) => sum + convertCurrency(income.amount, income.currency, currency), 0);
 
-  const totalExpected = mockIncomes
+  const totalExpected = incomes
     .filter(income => income.status === "expected")
     .reduce((sum, income) => sum + convertCurrency(income.amount, income.currency, currency), 0);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <Card className="h-full">
@@ -90,7 +100,7 @@ const IncomeList = () => {
                 <div className="flex flex-col">
                   <div className="font-medium">{income.title}</div>
                   <div className="text-sm text-muted-foreground">
-                    {format(income.date, "MMM d, yyyy")}
+                    {format(new Date(income.date), "MMM d, yyyy")}
                   </div>
                 </div>
                 <div className="flex items-center gap-3 mt-2 sm:mt-0">

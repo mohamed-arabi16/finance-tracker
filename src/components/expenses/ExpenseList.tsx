@@ -1,12 +1,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockExpenses, convertCurrency } from "@/data/mockData";
+import { convertCurrency } from "@/data/mockData";
+import { Expense } from "@/types/finance";
 import { ArrowUp } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
+import useSupabaseData from "@/hooks/useSupabaseData";
 
 const ExpenseList = () => {
+  const { data: expenses, loading, error } = useSupabaseData<Expense>('expenses');
   // Get currency from localStorage
   const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
     const saved = localStorage.getItem('defaultCurrency');
@@ -35,8 +38,8 @@ const ExpenseList = () => {
   }, []);
   
   // Sort expenses by date, with most recent first
-  const sortedExpenses = [...mockExpenses].sort((a, b) => 
-    a.date.getTime() - b.date.getTime()
+  const sortedExpenses = [...expenses].sort((a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
   const calculateAmount = (expense: any) => {
@@ -44,15 +47,23 @@ const ExpenseList = () => {
     return convertCurrency(expense.amount, expense.currency || 'USD', currency);
   };
 
-  const totalRecurring = mockExpenses
+  const totalRecurring = expenses
     .filter(expense => expense.type === "recurring")
     .reduce((sum, expense) => sum + calculateAmount(expense), 0);
 
-  const totalOneTime = mockExpenses
+  const totalOneTime = expenses
     .filter(expense => expense.type === "one-time")
     .reduce((sum, expense) => sum + calculateAmount(expense), 0);
     
   const currencySymbol = currency === 'USD' ? '$' : '₺';
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <Card className="h-full">
@@ -86,7 +97,7 @@ const ExpenseList = () => {
                 <div className="flex flex-col">
                   <div className="font-medium">{expense.title}</div>
                   <div className="text-sm text-muted-foreground flex items-center gap-2">
-                    <span>Due: {format(expense.date, "MMM d, yyyy")}</span>
+                    <span>Due: {format(new Date(expense.date), "MMM d, yyyy")}</span>
                     {expense.category && (
                       <Badge variant="outline" className="font-normal">
                         {expense.category}

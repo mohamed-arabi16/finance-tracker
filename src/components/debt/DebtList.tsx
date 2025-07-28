@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockDebts, convertCurrency } from "@/data/mockData";
+import { convertCurrency } from "@/data/mockData";
+import { Debt } from "@/types/finance";
 import { CreditCard, Currency } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import useSupabaseData from "@/hooks/useSupabaseData";
 
 const DebtList = () => {
+  const { data: debts, loading, error } = useSupabaseData<Debt>('debts');
   // Get currency from localStorage
   const [currency, setCurrency] = useState<'USD' | 'TRY'>(() => {
     const saved = localStorage.getItem('defaultCurrency');
@@ -41,8 +44,8 @@ const DebtList = () => {
   
   const currencySymbol = currency === 'USD' ? '$' : '₺';
   
-  const shortTermDebts = mockDebts.filter(debt => !debt.isLongTerm);
-  const longTermDebts = mockDebts.filter(debt => debt.isLongTerm);
+  const shortTermDebts = debts.filter(debt => !debt.is_long_term);
+  const longTermDebts = debts.filter(debt => debt.is_long_term);
 
   // Use consistent currency conversion function
   const totalShortTerm = shortTermDebts.reduce((sum, debt) => 
@@ -51,13 +54,22 @@ const DebtList = () => {
   const totalLongTerm = longTermDebts.reduce((sum, debt) => 
     sum + convertCurrency(debt.amount, debt.currency, currency), 0);
 
-  const formatDeadline = (date: Date) => {
+  const formatDeadline = (date: string) => {
+    const newDate = new Date(date);
     // Check if it's the beginning of 2026 (used for "no fixed date")
-    if (date.getFullYear() === 2026 && date.getMonth() === 0 && date.getDate() === 1) {
+    if (newDate.getFullYear() === 2026 && newDate.getMonth() === 0 && newDate.getDate() === 1) {
       return "No fixed date";
     }
-    return format(date, "MMM d, yyyy");
+    return format(newDate, "MMM d, yyyy");
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <Card className="h-full">
